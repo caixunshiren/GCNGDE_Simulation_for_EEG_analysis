@@ -30,6 +30,9 @@ class dataManager:
         self.A_test, self.P_avg_test, indices = self.create_adjacency_matrix(X_test, n)
         self.X_test = self.drop_samples(X_test, indices)
         self.Y_test = self.drop_samples(Y_test, indices)
+        #create adjacency matrix again using reduced X_train and X_test
+        self.A_train, self.P_avg_train, indices = self.create_adjacency_matrix(self.X_train, n)
+        self.A_test, self.P_avg_test, indices = self.create_adjacency_matrix(self.X_test, n)
 
     def create_adjacency_matrix(self, X, n):
         '''
@@ -143,4 +146,4 @@ plt.savefig(parent_dir+'/Covariance and Adjacency Matrix/figures/sample_node.png
 dm = dataManager(variables["X_train"],variables["X_test"],variables["y_train"],variables["y_test"],10**(-4))
 
 dm.sanity_check(4.514*10**-1, -10**-3)
-'''
+print(dm.P_avg_train)'''
