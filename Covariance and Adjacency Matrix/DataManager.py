@@ -42,8 +42,8 @@ class dataManager:
         P_avg: raw NxN covariance matrix before thresholding
         remove_indices: indices of bad samples that should be removed
         '''
-        D_0 = X.shape[0]
-        M = X.shape[2]
+        D_0 = X.shape[2]
+        M = X.shape[0]
         # X_bar is the average of each row (hence dimension M x N x 1)
         X_bar = np.mean(X, axis=2, keepdims=True)
         # buid P matrix (tensor since there are M examples) shape: MxNxN
@@ -58,8 +58,9 @@ class dataManager:
 
             except:
                 M -= 1;
+                #print("failed at",i)
                 remove_indices.append(i)
-
+        #print(M)
         P_avg = 1 / M * sum_train
         A = (P_avg > n)
         return A, P_avg, remove_indices
@@ -114,7 +115,7 @@ class dataManager:
             ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[0]]);
             ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[1]]);
             plt.savefig(parent_dir+'/Covariance and Adjacency Matrix/figures/' + 'low covariance node ' + str(couple[0]) + " and node " + str(couple[1]) + '.png')
-
+'''debug code
 import os,sys,inspect
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
@@ -141,4 +142,5 @@ ax.plot(np.linspace(0, 10, 640), X_train[:,5,0])
 plt.savefig(parent_dir+'/Covariance and Adjacency Matrix/figures/sample_node.png')
 dm = dataManager(variables["X_train"],variables["X_test"],variables["y_train"],variables["y_test"],10**(-4))
 
-dm.sanity_check(1*10**0, -4*10**-3)
+dm.sanity_check(4.514*10**-1, -10**-3)
+'''
