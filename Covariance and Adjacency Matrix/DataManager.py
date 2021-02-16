@@ -12,6 +12,15 @@ Y_train: 1xM Numpy Tensor
 X_test: 1xM Numpy Tensor
 n: float threshold for adjacency matrix
 
+stored types
+X_train: MxDxN Numpy Tensor
+X_test: MxDxN Numpy Tensor
+Y_train: Mx1 Numpy Tensor
+X_test: Mx1 Numpy Tensor
+A_train: NxN Numpy adjacency matrix
+A_train: NxN Numpy adjacency matrix
+P_avg_train: NxN Numpy covariance matrix
+P_avg_test: NxN Numpy covariance matrix
 '''
 
 
@@ -33,6 +42,7 @@ class dataManager:
         #create adjacency matrix again using reduced X_train and X_test
         self.A_train, self.P_avg_train, indices = self.create_adjacency_matrix(self.X_train, n)
         self.A_test, self.P_avg_test, indices = self.create_adjacency_matrix(self.X_test, n)
+        print("--------data manager successfully initialized--------")
 
     def create_adjacency_matrix(self, X, n):
         '''
@@ -79,7 +89,14 @@ class dataManager:
         '''
         return np.delete(X, np.s_[remove_indices], axis=0)
 
-    def sanity_check(self, t_h, t_l):
+    def re_threshold(self, n):
+        '''
+        recompute adjacency matrix A using a new threshold n
+        '''
+        self.A_train = (self.P_avg_train > n)
+        self.A_test = (self.P_avg_test > n)
+
+    def sanity_check(self, t_h, t_l, parent_dir):
         '''
         optional function for debugging. prints all pairs with covariance greater than t_h and less than t_l
         '''
