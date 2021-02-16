@@ -1,0 +1,6 @@
+{"model_type": "svm",
+"model_name": "replicate_smart_srch", 
+"C": "4.18e-03",
+"gamma": "1.18e-03",
+"ictal_wind": "short",
+"use_ftrs": ["PWR","PWR_3SEC","PWRSTD_3SEC","PWR_9SEC","VLTG","VLTG_3SEC","VLTGSTD_3SEC"]}

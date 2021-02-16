@@ -1,0 +1,7 @@
+{"model_type": "svm",
+"model_name": "bndedSvmDsamp500",
+"n_rand_params": 1,
+"equal_sub_wts": "True",
+"patience": 2,
+"use_ftrs": ["SE"]}
+

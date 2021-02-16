@@ -1,0 +1,4 @@
+CC
+CT
+NA
+TF

@@ -1,0 +1,142 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf830
+{\fonttbl\f0\fnil\fcharset0 Monaco;\f1\fnil\fcharset0 Menlo-Regular;\f2\fswiss\fcharset0 Helvetica;
+}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red255\green255\blue255;\red0\green0\blue254;
+\red109\green109\blue109;\red221\green220\blue255;}
+{\*\expandedcolortbl;;\csgenericrgb\c0\c0\c0;\csgenericrgb\c100000\c100000\c100000\c85000;\csgenericrgb\c0\c0\c99608;
+\csgenericrgb\c42745\c42745\c42745;\csgenericrgb\c86667\c86275\c100000;}
+\margl1440\margr1440\vieww10800\viewh12580\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs20 \cf2 \cb3 \CocoaLigature0 ***** Process Metadata for each Patient\cf0 \cb1 \CocoaLigature1 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 0. Run 00eu_metadata_flow\
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \cb3 \CocoaLigature0 ***** Check files for bad channels\
+>>run compute_psd_interictal.m to compute PSD from 20 randomly chosen files\
+>>find_bad_chans_with_GUI.m to identify bad chans via their PSD, needs to be run interactively\
+\
+I add some bad channels based on plots of seizure activity too. Some channels may be bad for only part of the recording period.\cf0 \cb1 \CocoaLigature1 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \cb3 \CocoaLigature0 ***** Check files for bad szrs:\cf0 \cb1 \CocoaLigature1 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 plot_clinical_szr_bipolar.m (plots waveforms of all clinical szrs for a patient)\
+plot_a_clinical_szr_bipolar.m (plots a single clinical szr and you can output it to disk)\
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \cb3 \CocoaLigature0 ***** Compute features from raw data for good SOZ channels\
+Note you can\'92t access iEEG binary files with multiple processes as the same time. Consequently, you can\'92t parallize this.\
+\
+EDM lags are 0,2,4,6,8\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \cb1 \CocoaLigature1 Feature sampling rate is ~10 Hz\
+window length was 1 second (I should increase this to two)\
+edge_pts=\cf4 1177 \cf5 # # of time pts at the start of each file to ignore due to edge effects (this about 118 sec of data)\cf2 \cb3 \CocoaLigature0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \cb3 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \cb6 \CocoaLigature1 bands\cb1 .append((\cf4 0\cf0 ,\cf4 4\cf0 )) \cf5 # Delta\uc0\u8232 \cf0 \cb6 bands\cb1 .append((\cf4 4\cf0 ,\cf4 8\cf0 )) \cf5 # Theta\uc0\u8232 \cf0 \cb6 bands\cb1 .append((\cf4 8\cf0 ,\cf4 13\cf0 )) \cf5 # Alpha\uc0\u8232 \cf0 \cb6 bands\cb1 .append((\cf4 13\cf0 ,\cf4 30\cf0 )) \cf5 # Beta\uc0\u8232 \cf0 \cb6 bands\cb1 .append((\cf4 30\cf0 ,\cf4 50\cf0 )) \cf5 # Gamma\uc0\u8232 \cf0 \cb6 bands\cb1 .append((\cf4 70\cf0 ,\cf4 100\cf0 )) \cf5 # High Gamma\cf2 \cb3 \CocoaLigature0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \cb3 \
+1. Compute features for peri-onset time windows and save to disk\
+For spectral energy (SE) use:\
+>>compute_se_perionset.m\
+\
+2. Grab an equal number of random inter-ictal time points and save to disk\
+For spectral energy (SE) use:\
+>>compute_se_interictal.m\
+\
+Then grab an equal number of random time points and save to disk for z-scoring\
+For spectral energy (SE) use:\
+>>compute_se_subsample.m\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf2 \cb3 3. Get szr/non-szr clinician labels for all data files:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \cb3 >>compute_se_labels_all.m\
+\
+4. Compute SE features for all files:\
+>>compute_se_all.m\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf2 \cb3 \
+Note that compute_se_all.m also outputs data labels to help ensure code accuracy. For test patient evaluation though, I just use the labels produced by compute_se_labels_all.m.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \cb3 For PLV use:\
+>>compute_plv_se_perionset.m\
+>>compute_plv_se_interictal.m\
+\
+***** Create test/validation and train subsets of patients\
+/Users/davidgroppe/PycharmProjects/SZR_ANT/EU_GENERAL/test_subs.txt\
+/Users/davidgroppe/PycharmProjects/SZR_ANT/EU_GENERAL/train_subs.txt\
+\
+\
+***** Use Kmeans to downsample the data\
+Run export_train_features.py via train_subs_batch.py to get 
+\f1\fs24 \cf2 \cb1 \CocoaLigature1 train_ftrs_aes.npz, note that this already scales and limits the data to lie between +/-3.99
+\f0\fs20 \cf2 \cb3 \CocoaLigature0 \
+\
+Then run: kmeans_dsamp_per_sub.py to downsample the data using kmeans\
+\
+Run plot_scaling.py to figure out how to scale data \
+\
+The data are scaled by eu.import_data\
+\
+\
+***** Use LOOCV to search hyperparameters (and create ensemble?)\
+1) To try random gamma values use:\
+$python train_smart_srch_multi_patient.py smart_rand_params_lappy.json \
+\
+2) Visualize the hyperparameter space results with:\
+plot_hyper_srch_lap.ipynb or plot_hyper_srch_marr.ipynb\
+\
+3) After you\'92ve found a useful regions of hyperparameter space, use the following to do a more fine grained search:\
+$python train_C_srch_multi_patient.py C_srch_params_marr.json\
+\
+4) Again visualize results to find best hyperparameters:\
+plot_hyper_srch_lap.ipynb or plot_hyper_srch_marr.ipynb\
+\
+\
+***** Apply ensemble of LOOCV models to test data\
+1) \cf2 \cb1 \CocoaLigature1 Applies saved ensemble of models to all of a subject's szr and subsampled non-szrr files and outputs the mean predictions to a mat file in the model's directory. This is useful for figuring out how well the model is at detecting ictal activity and for computing accuracy on test data:\cf5 \
+\cf2 \cb3 \CocoaLigature0 python apply_saved_models_to_szr.py 1096 genLogregSe_1\cf5 \cb1 \CocoaLigature1 \
+\cf2 \cb3 \CocoaLigature0 \
+To visualize these data run:\
+plot_yhat_with_data.m\
+\
+plot_a_clinical_szr_bipolar.m: plots iEEG traces, classifier output, & hypothetical stimulations\
+\
+2) Applies saved models to subsampled data:\
+python apply_models_to_subsamp.py logregAesFinale_1 train_subsAES.txt\
+python apply_models_to_subsamp.py logregAesFinale_1 test_subsAES.txt\
+\
+\
+3) Applies saved ensemble of models to continuous files:\
+python apply_saved_model_to_all_clips.py 1096 genLogregSe_1\
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc\partightenfactor0
+\cf2 \cb3 How do I get mean accuracy on test data?\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \cb3 \
+3) Compute stim latency, accuracy, and false positive rate:\
+>python compute_acc_with_refractory.py 1096 0.5 genLogregSe_3 <-todo finalize this??
+\f2\fs24 \cf0 \cb1 \CocoaLigature1 \
+
+\f0\fs20 \cf2 \cb3 \CocoaLigature0 \
+4) Summarize and visualize results over a list of subs\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f2\fs24 \cf0 \cb1 \CocoaLigature1 plot_stim_results.py \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs20 \cf2 \cb3 \CocoaLigature0 python derive_norm_params.py \
+\
+TODO comment all the above files\
+}

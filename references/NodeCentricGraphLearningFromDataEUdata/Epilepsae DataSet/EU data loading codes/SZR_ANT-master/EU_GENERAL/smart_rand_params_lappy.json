@@ -1,0 +1,7 @@
+{"model_type": "svm",
+"model_name": "tempEqWtSvm",
+"n_rand_params": 4,
+"patience": 1,
+"equal_sub_wts": "True",
+"use_ftrs": ["SE"]}
+

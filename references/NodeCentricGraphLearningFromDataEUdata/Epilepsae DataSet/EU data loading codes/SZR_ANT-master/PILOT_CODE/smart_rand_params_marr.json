@@ -1,0 +1,7 @@
+{"model_type": "svm",
+"model_name": "smart_srch_eq_pwr_difreq6",
+"n_rand_params": 3,
+"patience": 1,
+"ictal_wind": "small",
+"use_ftrs": ["MAG","MAG_LAG2","MAG_LAG4","MAG_LAG6","MAG_LAG8","DIFREQ_LAG2","DIFREQ_LAG4","DIFREQ_LAG6","DIFREQ_LAG8"]}
+

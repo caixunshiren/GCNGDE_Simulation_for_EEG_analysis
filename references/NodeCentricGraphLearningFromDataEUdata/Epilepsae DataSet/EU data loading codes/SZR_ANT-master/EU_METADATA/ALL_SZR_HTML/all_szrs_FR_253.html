@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>digest | epilepsiae.uniklinik-freiburg.de</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Matthias Ihle">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap.css" rel="stylesheet">
+    <link href="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-responsive.css" rel="stylesheet">
+    <link href="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/docs.css" rel="stylesheet">
+<!--    <link href="/media/js/prettify.css" rel="stylesheet">-->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="http://epilepsiae.uniklinik-freiburg.de/media/ico/favicon.ico">
+    <link rel="apple-touch-icon" href="http://epilepsiae.uniklinik-freiburg.de/media/ico/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="http://epilepsiae.uniklinik-freiburg.de/media/ico/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="http://epilepsiae.uniklinik-freiburg.de/media/ico/apple-touch-icon-114x114.png">
+
+<!--    <link href="/media/google-code-prettify/prettify.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="/media/google-code-prettify/prettify.js"></script>
+    <script type="text/javascript" src="/media/google-code-prettify/lang-sql.js"></script>-->
+
+
+
+  </head>
+
+  <body>
+
+    <!-- Navbar
+    ================================================== -->
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner" style="background:white;">
+            <div class="container">
+
+
+    <div class="btn-toolbar"> 
+ 
+        <div class="btn-group"> 
+            <a class="btn" href="http://epilepsiae.uniklinik-freiburg.de/"><i class="icon-home"></i> EpLinkToronto home</a> 
+            <a class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a> 
+            <ul class="dropdown-menu"> 
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/packages/"> my packages</a></li> 
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/packages/inv_30"> -&gt; package inv_30</a></li> 
+                <li class="divider"></li> 
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/datasets/"> my datasets</a></li> 
+                <li class="divider"></li> 
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/accounts/logout">logout</a></li>
+            </ul> 
+        </div> 
+<!--        <div class="btn-group"> 
+            <a class="btn" href="/packages/"> packages</a> 
+            <a class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a> 
+            <ul class="dropdown-menu">
+                <li><a href="/packages/inv_30">inv_30</a></li> 
+            </ul> 
+        </div> -->
+ 
+        
+        <div class="btn-group"> 
+            <a class="btn" href="http://epilepsiae.uniklinik-freiburg.de/patients/FR_253"><i class="icon-user"></i> patient FR_253</a> 
+            <a class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a> 
+            <ul class="dropdown-menu"> 
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/patients/FR_253/seizures">all seizures</a></li> 
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/patients/FR_253/seizurelist">text-file seizures</a></li> 
+            </ul> 
+        </div> 
+        
+        
+        <div class="btn-group"> 
+            <a class="btn" href="http://epilepsiae.uniklinik-freiburg.de/admissions/253102"><i class="icon-home"></i> adm_253102</a> 
+            <a class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a> 
+            <ul class="dropdown-menu">
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/admissions/253102/presurgical">pre-surgical evaluation</a></li>
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/admissions/253102/mri">MRI</a></li>
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/admissions/253102/electrodes">electrode setup</a></li>
+            </ul> 
+        </div> 
+        
+
+
+
+
+    
+    
+        
+        
+        <div class="btn-group"> 
+            <a class="btn" href="http://epilepsiae.uniklinik-freiburg.de/admissions/253102"><i class="icon-home"></i> adm_253102</a> 
+            <a class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a> 
+            <ul class="dropdown-menu">
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/admissions/253102/pre-sur">pre-surgical evaluation</a></li>
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/admissions/253102/mri">MRI</a></li>
+                <li><a href="http://epilepsiae.uniklinik-freiburg.de/electrodes/253102">electrode setup</a></li>
+            </ul> 
+        </div> 
+        
+        
+
+
+    </div> 
+
+            </div>
+        </div><!-- /navbar-inner -->
+    </div><!-- /navbar -->
+
+
+<div class="container">
+<!-- <ul class="breadcrumb">
+    <li><a href="#">Home</a> <span class="divider">/</span></li>
+</ul>--> 
+
+</div>
+
+
+
+    
+
+<style>
+.r { text-align:right; }
+.l { text-align:left; }
+</style>
+
+
+<div class="container">
+        <fieldset>
+            <legend>seizures</legend>
+            <table class="table table-condensed table-striped table-bordered">
+                <thead>
+                <tr><th>#</th><th>classif.</th><th>onset</th><th>offset</th><th>p.</th><th>vig.</th><th>origin</th><th>semiology</th></tr>
+                </thead>
+                <tbody>
+                
+                <tr>
+                    <td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300001102">1:</a></td>
+                    <td title="unclassified">UC</td>
+                    <td>eeg: 20.03.'04 09:45:19.558594
+                        
+                    </td>
+                    <td>eeg: 20.03.'04 09:46:15.503906
+                        
+                    </td>
+                    <td>s</td>
+                    <td>awake</td>
+                    <td>origin: HRB2,HRC2<br>
+                        early: HRA1, HRA2, HRA3, HRB3<br>
+                        late: HRA4, HRA5, HRB1, HRC1, HRC3
+                    </td>
+                    <td>dystonic_posturing, lid_myoclonus, eye_version, head_version, vocalisation, postictal_headache, postictal_todds_paresis</td>
+                    
+                </tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRC2<br><strong title="HRA1, HRA2, HRA3, HRB3">early prop:</strong> <strong title="HRA4, HRA5, HRB1, HRC1, HRC3">late prop:</strong></td>
+                </tr>-->
+                
+                <tr>
+                    <td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300101102">2:</a></td>
+                    <td title="simple partial">SP</td>
+                    <td>eeg: 23.03.'04 06:01:29.267578
+                        
+                    </td>
+                    <td>eeg: 23.03.'04 06:02:47.626953
+                        
+                    </td>
+                    <td>b</td>
+                    <td>sleep stage I</td>
+                    <td>origin: HRB2<br>
+                        early: HRB1, HRB3, HRA1, HRA2, HRA3, HRC1, HRC2<br>
+                        late: HRC3
+                    </td>
+                    <td>oral_automatisms, hypersalivation, postictal_headache, postictal_todds_paresis</td>
+                    
+                </tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2<br><strong title="HRB1, HRB3, HRA1, HRA2, HRA3, HRC1, HRC2">early prop:</strong> <strong title="HRC3">late prop:</strong></td>
+                </tr>-->
+                
+                <tr>
+                    <td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300201102">3:</a></td>
+                    <td title="secondarily generalized">SG</td>
+                    <td>eeg: 24.03.'04 16:55:59.025391
+                        
+                    </td>
+                    <td>eeg: 24.03.'04 16:58:20.482422
+                        
+                    </td>
+                    <td>s</td>
+                    <td>awake</td>
+                    <td>origin: HRB2,HRC2<br>
+                        early: HRB3<br>
+                        late: HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, 
+HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7,
+ FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, 
+CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, 
+HRA4, F8, FZ
+                    </td>
+                    <td>staring, oral_automatisms, manual_automatisms: left, postictal_headache, postictal_todds_paresis, postictal_nose_rubbing</td>
+                    
+                </tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRC2<br><strong title="HRB3">early prop:</strong> <strong title="HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7, FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, HRA4, F8, FZ">late prop:</strong></td>
+                </tr>-->
+                
+                <tr>
+                    <td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300301102">4:</a></td>
+                    <td title="secondarily generalized">SG</td>
+                    <td>eeg: 24.03.'04 20:05:01.419922
+                        
+                    </td>
+                    <td>eeg: 24.03.'04 20:07:00.570313
+                        
+                    </td>
+                    <td>r</td>
+                    <td>awake</td>
+                    <td>origin: HRB2,HRB3,HRC2<br>
+                        early: <br>
+                        late: HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, 
+HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7,
+ FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, 
+CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, 
+HRA4, F8, FZ
+                    </td>
+                    <td>oral_automatisms, manual_automatisms: left, 
+tonic_posturing: left, other_motor_symptoms_desc: rotatorische 
+Automatismen bd. Beine, postictal_anomia, other_postictal_aphasia, 
+postictal_headache, postictal_todds_paresis, postictal_nose_rubbing</td>
+                    
+                </tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRB3,HRC2<br><strong title="">early prop:</strong> <strong title="HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7, FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, HRA4, F8, FZ">late prop:</strong></td>
+                </tr>-->
+                
+                <tr>
+                    <td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300401102">5:</a></td>
+                    <td title="secondarily generalized">SG</td>
+                    <td>eeg: 25.03.'04 06:03:53.251953
+                        
+                    </td>
+                    <td>eeg: 25.03.'04 06:05:52.744141
+                        
+                    </td>
+                    <td>r</td>
+                    <td>sleep stage II</td>
+                    <td>origin: HRB2,HRC2<br>
+                        early: <br>
+                        late: HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, 
+HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7,
+ FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, 
+CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, 
+HRA4, F8, FZ
+                    </td>
+                    <td>postictal_headache, postictal_todds_paresis</td>
+                    
+                </tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRC2<br><strong title="">early prop:</strong> <strong title="HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7, FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, HRA4, F8, FZ">late prop:</strong></td>
+                </tr>-->
+                
+                <tr>
+                    <td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300501102">6:</a></td>
+                    <td title="complex partial">CP</td>
+                    <td>eeg: 25.03.'04 09:26:29.599609
+                        
+                    </td>
+                    <td>eeg: 25.03.'04 09:28:05.669922
+                        
+                    </td>
+                    <td>s</td>
+                    <td>awake</td>
+                    <td>origin: HRB2,HRB3,HRC2<br>
+                        early: HRA1, HRA2, HRA3, HRC3<br>
+                        late: HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, 
+HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7,
+ FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, 
+CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, 
+HRA4, F8, FZ
+                    </td>
+                    <td>postictal_headache, postictal_todds_paresis</td>
+                    
+                </tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRB3,HRC2<br><strong title="HRA1, HRA2, HRA3, HRC3">early prop:</strong> <strong title="HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7, FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, HRA4, F8, FZ">late prop:</strong></td>
+                </tr>-->
+                
+                <tr>
+                    <td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300601102">7:</a></td>
+                    <td title="complex partial">CP</td>
+                    <td>eeg: 26.03.'04 10:47:24.744141
+                        
+                    </td>
+                    <td>eeg: 26.03.'04 10:48:48.042969
+                        
+                    </td>
+                    <td>s</td>
+                    <td>awake</td>
+                    <td>origin: HRB2,HRB3,HRC2<br>
+                        early: HRA1, HRA2, HRC3<br>
+                        late: HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, 
+HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7,
+ FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, 
+CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, 
+HRA4, F8, FZ
+                    </td>
+                    <td>postictal_headache, postictal_todds_paresis</td>
+                    
+                </tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRB3,HRC2<br><strong title="HRA1, HRA2, HRC3">early prop:</strong> <strong title="HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7, FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, HRA4, F8, FZ">late prop:</strong></td>
+                </tr>-->
+                
+                </tbody>
+            </table>
+          </fieldset>
+
+    <div class="row">
+        <div class="span8">
+
+
+
+        <fieldset>
+            <legend>seizures</legend>
+            <table class="table table-condensed table-striped table-bordered">
+                <thead>
+                <tr><th>#</th><th>classif.</th><th>onset</th><th>pattern</th><th>vigilance</th><th>origin</th></tr>
+                </thead>
+                <tbody>
+                
+                <tr><td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300001102">1:</a></td><td title="unclassified">UC</td>
+                    <td>eeg: 20.03.'04 09:45:19.558594
+                        
+                    </td>
+                    <td>rhythmic sharp waves</td>
+                    <td>awake</td><td>HRB2,HRC2</td></tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRC2<br><strong title="HRA1, HRA2, HRA3, HRB3">early prop:</strong> <strong title="HRA4, HRA5, HRB1, HRC1, HRC3">late prop:</strong></td>
+                </tr>-->
+                
+                <tr><td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300101102">2:</a></td><td title="simple partial">SP</td>
+                    <td>eeg: 23.03.'04 06:01:29.267578
+                        
+                    </td>
+                    <td>rhythmic beta waves</td>
+                    <td>sleep stage I</td><td>HRB2</td></tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2<br><strong title="HRB1, HRB3, HRA1, HRA2, HRA3, HRC1, HRC2">early prop:</strong> <strong title="HRC3">late prop:</strong></td>
+                </tr>-->
+                
+                <tr><td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300201102">3:</a></td><td title="secondarily generalized">SG</td>
+                    <td>eeg: 24.03.'04 16:55:59.025391
+                        
+                    </td>
+                    <td>rhythmic sharp waves</td>
+                    <td>awake</td><td>HRB2,HRC2</td></tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRC2<br><strong title="HRB3">early prop:</strong> <strong title="HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7, FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, HRA4, F8, FZ">late prop:</strong></td>
+                </tr>-->
+                
+                <tr><td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300301102">4:</a></td><td title="secondarily generalized">SG</td>
+                    <td>eeg: 24.03.'04 20:05:01.419922
+                        
+                    </td>
+                    <td>repetitive spiking</td>
+                    <td>awake</td><td>HRB2,HRB3,HRC2</td></tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRB3,HRC2<br><strong title="">early prop:</strong> <strong title="HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7, FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, HRA4, F8, FZ">late prop:</strong></td>
+                </tr>-->
+                
+                <tr><td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300401102">5:</a></td><td title="secondarily generalized">SG</td>
+                    <td>eeg: 25.03.'04 06:03:53.251953
+                        
+                    </td>
+                    <td>repetitive spiking</td>
+                    <td>sleep stage II</td><td>HRB2,HRC2</td></tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRC2<br><strong title="">early prop:</strong> <strong title="HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7, FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, HRA4, F8, FZ">late prop:</strong></td>
+                </tr>-->
+                
+                <tr><td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300501102">6:</a></td><td title="complex partial">CP</td>
+                    <td>eeg: 25.03.'04 09:26:29.599609
+                        
+                    </td>
+                    <td>rhythmic sharp waves</td>
+                    <td>awake</td><td>HRB2,HRB3,HRC2</td></tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRB3,HRC2<br><strong title="HRA1, HRA2, HRA3, HRC3">early prop:</strong> <strong title="HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7, FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, HRA4, F8, FZ">late prop:</strong></td>
+                </tr>-->
+                
+                <tr><td><a href="http://epilepsiae.uniklinik-freiburg.de/seizures/25300601102">7:</a></td><td title="complex partial">CP</td>
+                    <td>eeg: 26.03.'04 10:47:24.744141
+                        
+                    </td>
+                    <td>rhythmic sharp waves</td>
+                    <td>awake</td><td>HRB2,HRB3,HRC2</td></tr>
+                    <!--<tr><td></td><td colspan='5'><strong>origin:</strong> HRB2,HRB3,HRC2<br><strong title="HRA1, HRA2, HRC3">early prop:</strong> <strong title="HLA3, HLA2, HLA1, HLA5, HLA4, HLC1, HLC3, HLC2, HLC5, HLC4, O2, O1, HRB1, HRB2, HRB3, HRB4, HRB5, PZ, F7, FP1, T7, FP2, C3, T8, C4, P3, P7, P4, P8, FT10, HLB4, HLB5, HLB2, HLB3, HLB1, CZ, FT9, HRC3, HRC2, HRC1, F3, F4, HRC5, HRC4, HRA1, HRA3, HRA2, HRA5, HRA4, F8, FZ">late prop:</strong></td>
+                </tr>-->
+                
+                </tbody>
+            </table>
+          </fieldset>
+
+        </div>
+        <div class="span4">
+
+
+            <h3>Subclinical Seizures</h3>
+            <table class="table table-striped table-condensed table-bordered">
+                
+                <thead>
+                    <tr><th>#</th><th>onset</th><th>offset</th></tr>
+                </thead>
+                
+                <tbody>
+                
+                <tr><td>1:</td>
+                    <td>16.03.'04 01:43:02</td><td>01:43:15</td>
+                </tr>
+                
+                <tr><td>2:</td>
+                    <td>16.03.'04 07:19:36</td><td>07:20:21</td>
+                </tr>
+                
+                <tr><td>3:</td>
+                    <td>16.03.'04 11:53:54</td><td>11:54:02</td>
+                </tr>
+                
+                <tr><td>4:</td>
+                    <td>16.03.'04 12:38:16</td><td>12:38:23</td>
+                </tr>
+                
+                <tr><td>5:</td>
+                    <td>16.03.'04 18:27:12</td><td>18:27:43</td>
+                </tr>
+                
+                <tr><td>6:</td>
+                    <td>17.03.'04 02:56:20</td><td>02:56:30</td>
+                </tr>
+                
+                <tr><td>7:</td>
+                    <td>17.03.'04 04:30:15</td><td>04:30:30</td>
+                </tr>
+                
+                <tr><td>8:</td>
+                    <td>17.03.'04 06:23:41</td><td>06:24:06</td>
+                </tr>
+                
+                <tr><td>9:</td>
+                    <td>17.03.'04 12:11:02</td><td>12:11:44</td>
+                </tr>
+                
+                <tr><td>10:</td>
+                    <td>17.03.'04 12:30:10</td><td>12:31:03</td>
+                </tr>
+                
+                <tr><td>11:</td>
+                    <td>17.03.'04 12:39:06</td><td>12:39:10</td>
+                </tr>
+                
+                <tr><td>12:</td>
+                    <td>17.03.'04 19:27:04</td><td>19:27:23</td>
+                </tr>
+                
+                <tr><td>13:</td>
+                    <td>18.03.'04 00:57:14</td><td>00:57:34</td>
+                </tr>
+                
+                <tr><td>14:</td>
+                    <td>18.03.'04 01:52:51</td><td>01:53:05</td>
+                </tr>
+                
+                <tr><td>15:</td>
+                    <td>18.03.'04 02:23:49</td><td>02:24:14</td>
+                </tr>
+                
+                <tr><td>16:</td>
+                    <td>18.03.'04 04:13:08</td><td>04:13:29</td>
+                </tr>
+                
+                <tr><td>17:</td>
+                    <td>18.03.'04 12:07:43</td><td>12:08:17</td>
+                </tr>
+                
+                <tr><td>18:</td>
+                    <td>18.03.'04 13:55:08</td><td>13:56:02</td>
+                </tr>
+                
+                <tr><td>19:</td>
+                    <td>18.03.'04 14:25:01</td><td>14:25:15</td>
+                </tr>
+                
+                <tr><td>20:</td>
+                    <td>18.03.'04 15:21:24</td><td>15:21:35</td>
+                </tr>
+                
+                <tr><td>21:</td>
+                    <td>18.03.'04 15:21:58</td><td>15:22:10</td>
+                </tr>
+                
+                <tr><td>22:</td>
+                    <td>18.03.'04 16:16:00</td><td>16:16:19</td>
+                </tr>
+                
+                <tr><td>23:</td>
+                    <td>18.03.'04 16:40:50</td><td>16:41:17</td>
+                </tr>
+                
+                <tr><td>24:</td>
+                    <td>18.03.'04 16:49:45</td><td>16:50:18</td>
+                </tr>
+                
+                <tr><td>25:</td>
+                    <td>18.03.'04 16:55:18</td><td>16:55:34</td>
+                </tr>
+                
+                <tr><td>26:</td>
+                    <td>18.03.'04 21:08:19</td><td>21:08:32</td>
+                </tr>
+                
+                <tr><td>27:</td>
+                    <td>18.03.'04 21:17:24</td><td>21:17:40</td>
+                </tr>
+                
+                <tr><td>28:</td>
+                    <td>18.03.'04 23:02:59</td><td>23:03:49</td>
+                </tr>
+                
+                <tr><td>29:</td>
+                    <td>19.03.'04 05:51:23</td><td>05:51:45</td>
+                </tr>
+                
+                <tr><td>30:</td>
+                    <td>19.03.'04 06:09:44</td><td>06:09:57</td>
+                </tr>
+                
+                <tr><td>31:</td>
+                    <td>19.03.'04 07:14:10</td><td>07:14:31</td>
+                </tr>
+                
+                <tr><td>32:</td>
+                    <td>19.03.'04 08:26:01</td><td>08:26:19</td>
+                </tr>
+                
+                <tr><td>33:</td>
+                    <td>19.03.'04 13:52:09</td><td>13:52:32</td>
+                </tr>
+                
+                <tr><td>34:</td>
+                    <td>19.03.'04 15:15:28</td><td>15:15:53</td>
+                </tr>
+                
+                <tr><td>35:</td>
+                    <td>19.03.'04 17:45:45</td><td>17:46:00</td>
+                </tr>
+                
+                <tr><td>36:</td>
+                    <td>19.03.'04 18:53:44</td><td>18:53:58</td>
+                </tr>
+                
+                <tr><td>37:</td>
+                    <td>19.03.'04 21:48:14</td><td>21:48:47</td>
+                </tr>
+                
+                <tr><td>38:</td>
+                    <td>19.03.'04 22:31:59</td><td>22:32:37</td>
+                </tr>
+                
+                <tr><td>39:</td>
+                    <td>19.03.'04 22:53:37</td><td>22:53:44</td>
+                </tr>
+                
+                <tr><td>40:</td>
+                    <td>20.03.'04 00:46:08</td><td>00:47:04</td>
+                </tr>
+                
+                <tr><td>41:</td>
+                    <td>20.03.'04 01:16:51</td><td>01:17:07</td>
+                </tr>
+                
+                <tr><td>42:</td>
+                    <td>20.03.'04 02:07:22</td><td>02:08:27</td>
+                </tr>
+                
+                <tr><td>43:</td>
+                    <td>20.03.'04 07:51:21</td><td>07:52:40</td>
+                </tr>
+                
+                <tr><td>44:</td>
+                    <td>20.03.'04 12:38:02</td><td>12:39:19</td>
+                </tr>
+                
+                <tr><td>45:</td>
+                    <td>21.03.'04 06:51:17</td><td>06:52:08</td>
+                </tr>
+                
+                <tr><td>46:</td>
+                    <td>21.03.'04 10:47:42</td><td>10:48:18</td>
+                </tr>
+                
+                <tr><td>47:</td>
+                    <td>21.03.'04 11:33:28</td><td>11:33:54</td>
+                </tr>
+                
+                <tr><td>48:</td>
+                    <td>21.03.'04 11:53:48</td><td>11:54:06</td>
+                </tr>
+                
+                <tr><td>49:</td>
+                    <td>21.03.'04 12:41:06</td><td>12:41:31</td>
+                </tr>
+                
+                <tr><td>50:</td>
+                    <td>21.03.'04 12:45:07</td><td>12:45:47</td>
+                </tr>
+                
+                <tr><td>51:</td>
+                    <td>21.03.'04 14:26:57</td><td>14:28:00</td>
+                </tr>
+                
+                <tr><td>52:</td>
+                    <td>21.03.'04 18:39:26</td><td>18:39:58</td>
+                </tr>
+                
+                <tr><td>53:</td>
+                    <td>21.03.'04 19:04:25</td><td>19:04:47</td>
+                </tr>
+                
+                <tr><td>54:</td>
+                    <td>21.03.'04 19:31:35</td><td>19:32:17</td>
+                </tr>
+                
+                <tr><td>55:</td>
+                    <td>22.03.'04 06:08:12</td><td>06:09:04</td>
+                </tr>
+                
+                <tr><td>56:</td>
+                    <td>22.03.'04 20:31:17</td><td>20:32:00</td>
+                </tr>
+                
+                <tr><td>57:</td>
+                    <td>23.03.'04 12:33:10</td><td>12:33:22</td>
+                </tr>
+                
+                <tr><td>58:</td>
+                    <td>24.03.'04 06:51:25</td><td>06:51:52</td>
+                </tr>
+                
+                <tr><td>59:</td>
+                    <td>24.03.'04 13:24:23</td><td>13:25:19</td>
+                </tr>
+                
+                <tr><td>60:</td>
+                    <td>24.03.'04 13:36:09</td><td>13:36:14</td>
+                </tr>
+                
+                <tr><td>61:</td>
+                    <td>24.03.'04 15:42:24</td><td>15:42:39</td>
+                </tr>
+                
+                <tr><td>62:</td>
+                    <td>24.03.'04 16:29:43</td><td>16:30:00</td>
+                </tr>
+                
+                <tr><td>63:</td>
+                    <td>24.03.'04 21:16:55</td><td>21:17:15</td>
+                </tr>
+                
+                <tr><td>64:</td>
+                    <td>25.03.'04 01:51:01</td><td>01:51:25</td>
+                </tr>
+                
+                <tr><td>65:</td>
+                    <td>25.03.'04 07:08:41</td><td>07:09:28</td>
+                </tr>
+                
+                <tr><td>66:</td>
+                    <td>25.03.'04 19:27:07</td><td>19:27:40</td>
+                </tr>
+                
+                <tr><td>67:</td>
+                    <td>26.03.'04 09:12:19</td><td>09:12:36</td>
+                </tr>
+                
+                <tr><td>68:</td>
+                    <td>26.03.'04 09:31:35</td><td>09:32:30</td>
+                </tr>
+                
+                <tr><td>69:</td>
+                    <td>26.03.'04 09:33:24</td><td>09:33:32</td>
+                </tr>
+                
+                <tr><td>70:</td>
+                    <td>26.03.'04 10:30:08</td><td>10:30:36</td>
+                </tr>
+                
+                <tr><td>71:</td>
+                    <td>26.03.'04 15:07:51</td><td>15:08:27</td>
+                </tr>
+                
+                </tbody>
+                <tfoot><tr><td>total:</td><th colspan="2">71 subclinical seizure(s)</th></tr></tfoot>
+            </table>
+
+        </div>
+        <div class="span4">
+
+            <h3>Interictal Events</h3>
+
+            <table class="table table-striped table-condensed table-bordered">
+                
+                <thead>
+                <tr><th>type</th><th>pattern</th><!--<th>peak</th>--><th>electrode</th></tr>
+                </thead>
+                
+                <tbody>
+                
+                <tr>
+                    <td>2</td>
+                    <td>spike</td>
+<!--                    <td>15 Mar &#39;04 17:17:59</td>-->
+                    <td title="HLB1, HLB2">HLC1</td>
+                </tr>
+                
+                <tr>
+                    <td>1</td>
+                    <td>spike</td>
+<!--                    <td>15 Mar &#39;04 17:18:06</td>-->
+                    <td title="HRB1, HRB3, HRA3, HRC1, HRC2">HRB2</td>
+                </tr>
+                
+                <tr>
+                    <td>3</td>
+                    <td>sharp waves</td>
+<!--                    <td>15 Mar &#39;04 17:18:30</td>-->
+                    <td title="HRB1, HRB2, HRC1, HRC2">HRA3</td>
+                </tr>
+                
+                <tr>
+                    <td>4</td>
+                    <td>spike</td>
+<!--                    <td>15 Mar &#39;04 17:18:42</td>-->
+                    <td title="HLC1">HLB2</td>
+                </tr>
+                
+                <tr>
+                    <td>5</td>
+                    <td>spike</td>
+<!--                    <td>15 Mar &#39;04 17:20:16</td>-->
+                    <td title="HRA4">HRA5</td>
+                </tr>
+                
+                <tr>
+                    <td>6</td>
+                    <td>spike</td>
+<!--                    <td>15 Mar &#39;04 17:24:59</td>-->
+                    <td title="HLA1, HLA3, HLB1">HLA2</td>
+                </tr>
+                
+                <tr>
+                    <td>7</td>
+                    <td>spike</td>
+<!--                    <td>15 Mar &#39;04 17:27:48</td>-->
+                    <td title="HRB2">HRB1</td>
+                </tr>
+                
+                <tr>
+                    <td>8</td>
+                    <td>spike</td>
+<!--                    <td>15 Mar &#39;04 17:28:12</td>-->
+                    <td title="HRA1, HRA3, HRB1, HRB2, HRB3, HRC1, HRC2">HRA2</td>
+                </tr>
+                
+                </tbody>
+                <tfoot><tr><td>total:</td><th colspan="2">8 interictal event(s)</th></tr></tfoot>
+            </table>
+
+        </div>
+        </div>
+
+
+        
+    </div>
+
+
+
+ 
+
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/javascript" src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/widgets.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/jquery-1.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/prettify.html"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-transition.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-alert.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-modal.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-dropdown.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-scrollspy.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-tab.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-tooltip.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-popover.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-button.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-collapse.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-carousel.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/bootstrap-typeahead.js"></script>
+    <script src="digest%20%7C%20epilepsiae.uniklinik-freiburg.de_files/application.html"></script>
+
+
+
+  
+ 
+</body></html>

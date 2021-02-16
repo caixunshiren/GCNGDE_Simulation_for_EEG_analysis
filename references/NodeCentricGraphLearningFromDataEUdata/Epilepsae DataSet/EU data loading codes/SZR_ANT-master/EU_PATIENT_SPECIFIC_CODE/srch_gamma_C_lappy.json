@@ -1,0 +1,7 @@
+{"model_type": "logreg",
+"model_name_stem": "eu_sbox_logreg", 
+"n_rand_params": 1,
+"patience": 0,
+"sub": "1096",
+"szr_ant": "True",
+"use_ftrs": ["EU_MAG_LAG0","EU_MAG_LAG2","EU_MAG_LAG4","EU_MAG_LAG6","EU_MAG_LAG8"]}

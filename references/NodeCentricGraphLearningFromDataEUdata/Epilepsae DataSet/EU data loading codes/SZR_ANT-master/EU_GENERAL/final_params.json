@@ -1,0 +1,7 @@
+{"model_type": "svm",
+"model_name": "svmDsamp500",
+"equal_sub_wts": "True",
+"gamma": 0.054010,
+"C": 86384047828.470001,
+"use_ftrs": ["SE"]}
+

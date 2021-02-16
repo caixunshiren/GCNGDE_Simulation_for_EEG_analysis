@@ -1,0 +1,10 @@
+{"model_type": "svm",
+"model_name": "seSvmDsamp10TestFull",
+"gam": -3,
+"C": 10,
+"patience": 1,
+"equal_sub_wts": "True",
+"data_dir": "KDOWNSAMP_10_MAY_2018", 
+"bounded": "False",
+"use_ftrs": ["SE"]}
+

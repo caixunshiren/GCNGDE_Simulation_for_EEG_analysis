@@ -1,0 +1,7 @@
+{"model_type": "svm",
+"model_name": "seSvmDsamp500_noEnsemble",
+"equal_sub_wts": "True",
+"gamma": 0.0000007,
+"C": 5000000000,
+"use_ftrs": ["SE"]}
+
