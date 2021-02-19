@@ -13,8 +13,8 @@ X_test: 1xM Numpy Tensor
 n: float threshold for adjacency matrix
 
 stored types
-X_train: MxDxN Numpy Tensor
-X_test: MxDxN Numpy Tensor
+X_train: MxNxD Numpy Tensor
+X_test: MxNxD Numpy Tensor
 Y_train: Mx1 Numpy Tensor
 X_test: Mx1 Numpy Tensor
 A_train: NxN Numpy adjacency matrix
@@ -42,6 +42,9 @@ class dataManager:
         #create adjacency matrix again using reduced X_train and X_test
         self.A_train, self.P_avg_train, indices = self.create_adjacency_matrix(self.X_train, n)
         self.A_test, self.P_avg_test, indices = self.create_adjacency_matrix(self.X_test, n)
+
+        self.mean = None
+        self.sd = None
         print("--------data manager successfully initialized--------")
 
     def create_adjacency_matrix(self, X, n):
@@ -96,6 +99,25 @@ class dataManager:
         self.A_train = (self.P_avg_train > n)
         self.A_test = (self.P_avg_test > n)
 
+    def normalize(self):
+        '''
+        normalize X_train and X_test
+        '''
+        sample_mean = np.mean(self.X_train, axis=0, keepdims=True)
+        self.mean = np.mean(sample_mean, axis=2, keepdims=True)
+        self.sd = np.std(sample_mean, axis=2, keepdims=True)
+        self.X_train = (self.X_train - self.mean) / self.sd
+        self.X_test = (self.X_test - self.mean) / self.sd
+
+    def de_normalize(self):
+        '''
+        unnormalize X_train and X_test
+        '''
+        self.X_train = self.X_train * self.sd + self.mean
+        self.X_test = self.X_test * self.sd + self.mean
+        self.mean = None
+        self.sd = None
+
     def sanity_check(self, t_h, t_l, parent_dir):
         '''
         optional function for debugging. prints all pairs with covariance greater than t_h and less than t_l
@@ -135,7 +157,8 @@ class dataManager:
             ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[0]]);
             ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[1]]);
             plt.savefig(parent_dir+'/Covariance and Adjacency Matrix/figures/' + 'low covariance node ' + str(couple[0]) + " and node " + str(couple[1]) + '.png')
-'''debug code
+#debug code
+'''
 import os,sys,inspect
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
@@ -162,5 +185,13 @@ ax.plot(np.linspace(0, 10, 640), X_train[:,5,0])
 plt.savefig(parent_dir+'/Covariance and Adjacency Matrix/figures/sample_node.png')
 dm = dataManager(variables["X_train"],variables["X_test"],variables["y_train"],variables["y_test"],10**(-4))
 
-dm.sanity_check(4.514*10**-1, -10**-3)
-print(dm.P_avg_train)'''
+#dm.sanity_check(4.514*10**-1, -10**-3)
+#print(dm.P_avg_train)
+print(dm.X_train, dm.X_train.shape)
+print('----------------------------------------------------')
+dm.normalize()
+print(dm.X_train, dm.X_train.shape)
+print('----------------------------------------------------')
+dm.de_normalize()
+print(dm.X_train, dm.X_train.shape)
+'''
