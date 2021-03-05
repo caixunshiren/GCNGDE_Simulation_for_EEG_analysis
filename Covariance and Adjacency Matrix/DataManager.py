@@ -33,15 +33,19 @@ class dataManager:
         X_test = np.transpose(X_test, (2, 1, 0))
 
         self.A_train, self.P_avg_train, indices = self.create_adjacency_matrix(X_train, n)
+        self.train_indices = indices
         self.X_train = self.drop_samples(X_train, indices)
         self.Y_train = self.drop_samples(Y_train, indices)
 
         self.A_test, self.P_avg_test, indices = self.create_adjacency_matrix(X_test, n)
+        self.test_indices = indices
         self.X_test = self.drop_samples(X_test, indices)
         self.Y_test = self.drop_samples(Y_test, indices)
         #create adjacency matrix again using reduced X_train and X_test
         self.A_train, self.P_avg_train, indices = self.create_adjacency_matrix(self.X_train, n)
         self.A_test, self.P_avg_test, indices = self.create_adjacency_matrix(self.X_test, n)
+
+
 
         self.mean = None
         self.sd = None
@@ -138,8 +142,8 @@ class dataManager:
             plt.figure()
             plt.title('high covariance node ' + str(couple[0]) + " and node " + str(couple[1]))
             ax1 = plt.axes()
-            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[0]]);
-            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[1]]);
+            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[0]])
+            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[1]])
             plt.savefig(parent_dir+'/Covariance and Adjacency Matrix/figures/'+'high covariance node ' + str(couple[0]) + " and node " + str(couple[1])+'.png')
 
         # select lowest covariance couples
@@ -154,8 +158,8 @@ class dataManager:
             plt.figure()
             plt.title('low covariance node ' + str(couple[0]) + " and node " + str(couple[1]))
             ax1 = plt.axes()
-            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[0]]);
-            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[1]]);
+            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[0]])
+            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[1]])
             plt.savefig(parent_dir+'/Covariance and Adjacency Matrix/figures/' + 'low covariance node ' + str(couple[0]) + " and node " + str(couple[1]) + '.png')
 #debug code
 '''

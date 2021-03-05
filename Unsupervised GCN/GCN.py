@@ -70,20 +70,23 @@ class SimularityMatrix(nn.Module):
         D = Z.shape[2]
         # centering normalize Z
         Z = self.fcn(Z)
-        sim_matrix = torch.zeros(M, N, N)
+        return self.get_sim_vectorized(Z)
+        '''
+        sim_matrix = torch.zeros(M ,N, N)
         for u in range(N):
             for v in range(N):
-                if u > v:
-                    zu = torch.reshape(Z[:, u, :], (M, 1, D))
-                    zv = torch.reshape(Z[:, v, :], (M, 1, D))
-                    sim_matrix[:, u, v] = self.get_sim(zu, zv)
-                    sim_matrix[:, v, u] = sim_matrix[:, u, v]
-                elif u == v:
-                    zu = torch.reshape(Z[:, u, :], (M, 1, D))
+                if u>v:
+                    zu = torch.reshape(Z[:,u,:], (M,1,D))
+                    zv = torch.reshape(Z[:,v,:], (M,1,D))
+                    sim_matrix[:,u,v] = self.get_sim(zu, zv)
+                    sim_matrix[:,v,u] = sim_matrix[:,u,v]
+                elif u==v:    
+                    zu = torch.reshape(Z[:,u,:], (M,1,D))
                     a = self.get_sim(zu, zu)
-                    # print(a.shape, sim_matrix.shape)
-                    sim_matrix[:, u, v] = a
+                    #print(a.shape, sim_matrix.shape)
+                    sim_matrix[:,u,v] = a
         return sim_matrix
+        '''
 
     # simularity between node u and node v (shape Mx1xD)
     # return the u,v index of the simularity matrix
@@ -93,10 +96,16 @@ class SimularityMatrix(nn.Module):
         # print(u.shape, theta.shape, self.weight.shape, torch.transpose(v, 1, 2).shape)
         return torch.squeeze(torch.matmul(torch.matmul(u, theta), torch.transpose(v, 1, 2)))
 
+    def get_sim_vectorized(self, Z):  # Z is M x N Sx 2D
+        theta = torch.diag(self.weight)
+        sim_matrix = torch.matmul(torch.matmul(Z, theta), torch.transpose(Z, 1, 2))
+        return sim_matrix
+
     # centering-normalizing (CN) operator
-    def fcn(self, u):
-        norm_u = (u - torch.mean(u, dim=2, keepdim=True))
-        return norm_u / (((1 / (self.in_features - 1)) * torch.sum(norm_u ** 2, dim=2, keepdim=True)) ** (1 / 2))
+    def fcn(self, Z):
+        norm_Z = (Z - torch.mean(Z, dim=2, keepdim=True))
+        return norm_Z / torch.std(Z, unbiased=True, dim=2, keepdim=True)
+        # (((1/(self.in_features-1)) * torch.sum(norm_Z**2, dim = 2, keepdim = True))**(1/2))
 
 # n-layer GCN Network
 class Net(nn.Module):
@@ -117,15 +126,18 @@ class Net(nn.Module):
         sim_matrix = self.tail(x, h_0)
         return sim_matrix
 
+
 class sim_loss(torch.nn.Module):
 
     def __init__(self):
-        super(sim_loss,self).__init__()
+        super(sim_loss, self).__init__()
 
-    def forward(self, sim_matrix, A, epsilon = 1e-8):
-        A_tf = (A!=0)
+    def forward(self, sim_matrix, A, epsilon=1e-8):
+        A_tf = (A != 0)
         M = sim_matrix.shape[0]
-        abs_N = torch.sum(A_tf, dim = 1, keepdim = True)
-        logexp_S = torch.log(torch.sum(torch.exp(sim_matrix), dim = 2, keepdim = True)+epsilon)
-        obj_matrix = A_tf*(sim_matrix - abs_N * logexp_S)
-        return -(1/M)*torch.sum(obj_matrix)
+        abs_N = torch.sum(A_tf, dim=1, keepdim=True)  # Nx1 matrix
+
+        logexp_S = torch.log(torch.sum(torch.exp(sim_matrix), dim=2, keepdim=True))
+
+        obj_vector = (torch.sum(A_tf * sim_matrix, dim=2, keepdim=True) - abs_N * logexp_S)
+        return -(1 / M) * torch.sum(obj_vector)
