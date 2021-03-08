@@ -71,22 +71,7 @@ class SimularityMatrix(nn.Module):
         # centering normalize Z
         Z = self.fcn(Z)
         return self.get_sim_vectorized(Z)
-        '''
-        sim_matrix = torch.zeros(M ,N, N)
-        for u in range(N):
-            for v in range(N):
-                if u>v:
-                    zu = torch.reshape(Z[:,u,:], (M,1,D))
-                    zv = torch.reshape(Z[:,v,:], (M,1,D))
-                    sim_matrix[:,u,v] = self.get_sim(zu, zv)
-                    sim_matrix[:,v,u] = sim_matrix[:,u,v]
-                elif u==v:    
-                    zu = torch.reshape(Z[:,u,:], (M,1,D))
-                    a = self.get_sim(zu, zu)
-                    #print(a.shape, sim_matrix.shape)
-                    sim_matrix[:,u,v] = a
-        return sim_matrix
-        '''
+
 
     # simularity between node u and node v (shape Mx1xD)
     # return the u,v index of the simularity matrix
