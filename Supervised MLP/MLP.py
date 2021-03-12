@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchsummary import summary
+import copy
 
 
 class MLP(nn.Module):
@@ -13,10 +15,10 @@ class MLP(nn.Module):
                 self.layers.append(nn.Dropout(dropout[i]))
             if i < n_layers - 1:
                 self.layers.append(
-                    nn.Linear(feature_len // layer_size_factor[i], feature_len // layer_size_factor[i + 1]))
+                    nn.Linear(int(feature_len // layer_size_factor[i]), int(feature_len // layer_size_factor[i + 1])))
                 self.layers.append(nn.ReLU())
             else:
-                self.layers.append(nn.Linear(feature_len // layer_size_factor[i], 1))
+                self.layers.append(nn.Linear(int(feature_len // layer_size_factor[i]), 1))
                 self.layers.append(nn.Sigmoid())
 
     def flatten(self, sim_matrices):
@@ -110,13 +112,10 @@ def recall(y_pred, y_true, threshold=0.5):
     y_pred = y_pred > threshold
     return recall_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
 
-
-from torchsummary import summary
-
-
-def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, print_summary=True, verbose=True):
+def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, autostop_decay=0.995, print_summary=True, verbose=True, saving = True):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    MLPmodel = MLP(sim_train.shape[1], parameters['n_layers'], parameters['layer_size_factor'], parameters['dropout']).to(device)
+    MLPmodel = MLP(sim_train.shape[1], parameters['n_layers'], parameters['layer_size_factor'],
+                   parameters['dropout']).to(device)
     X_train = torch.from_numpy(sim_train).float().to(device)
     X_test = torch.from_numpy(sim_test).float().to(device)
     Y_train = torch.from_numpy(dm.Y_train).float().to(device)
@@ -128,6 +127,7 @@ def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, print_summary=True
     # criterion = F1_Loss()
 
     max_v_a = 0
+    bestmodel = None
 
     if print_summary:
         print(MLPmodel)
@@ -137,7 +137,7 @@ def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, print_summary=True
     batch_size = parameters['batch_size']
 
     # early stopping
-    beta = 0.985
+    beta = autostop_decay
     epoch = 0
     V = 0
     while (True):
@@ -148,6 +148,7 @@ def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, print_summary=True
         t_a = 0
         v_a = 0
         n_b = 0
+        val_acc = 0
         epoch += 1
 
         for i in range(0, X_train.shape[0], batch_size):
@@ -156,43 +157,67 @@ def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, print_summary=True
             indices = permutation[i:i + batch_size] if i + batch_size < X_train.shape[0] else permutation[i:]
             batch_x_train = X_train[indices, :, :]
             batch_y_train = Y_train[indices, :]
-            batch_x_test = X_test[indices, :, :]
-            batch_y_test = Y_test[indices, :]
 
             MLPmodel.train()
             train_pred = MLPmodel(batch_x_train)
             train_loss = criterion(train_pred, batch_y_train)
             train_loss.backward()
             optimizer.step()
-            train_acc = acc_fn(train_pred, batch_y_train, threshold=0.4)
-
-            MLPmodel.eval()
-            val_pred = MLPmodel(batch_x_test)
-            val_loss = criterion(val_pred, batch_y_test)
-            val_acc = acc_fn(val_pred, batch_y_test, threshold=0.4)
+            train_acc = acc_fn(train_pred, batch_y_train, threshold=0.5)
 
             t_l += float(train_loss)
-            v_l += float(val_loss)
             t_a += float(train_acc)
-            v_a += float(val_acc)
             n_b += 1
 
-        epoch_val_loss = v_l / n_b
+        # get val accuracy
+        MLPmodel.eval()
+        for i in range(5, 100, 5):
+            t = i / 100;
+            val_pred = MLPmodel(X_test)
+            val_loss = criterion(val_pred, Y_test)
+            tva = acc_fn(val_pred, Y_test, threshold=t)
+            if tva > val_acc:
+                val_acc = tva
+
+        v_l += float(val_loss)
+        v_a += float(val_acc)
+
+        epoch_val_loss = v_l
         if epoch == 1:
             v = epoch_val_loss
         else:
             v = beta * v + (1 - beta) * epoch_val_loss
 
         if verbose:
-            print("Epoch:", epoch, "  Train loss:", round(t_l / n_b, 4), "  Train accuracy:", round(t_a / n_b, 2),
-                  "  Val loss:", round(v_l / n_b, 4), "  Val accuracy:", round(v_a / n_b, 2), "   weighted Val loss:",
+            print("Epoch:", epoch, "  Train loss:", round(t_l / n_b, 4), "  Train accuracy:", round(t_a / n_b, 3),
+                  "  Val loss:", round(v_l, 4), "  Val accuracy:", round(v_a, 3), "   weighted Val loss:",
                   round(v, 4))
-        if v_a / n_b > max_v_a:
-            max_v_a = v_a / n_b
-        if epoch_val_loss > v:
+        if v_a > max_v_a:
+            max_v_a = v_a
+            if saving:
+                # bestmodel = MLP(sim_train.shape[1], parameters['n_layers'], parameters['layer_size_factor'], parameters['dropout']).to(device)
+                # bestmodel.load_state_dict(copy.deepcopy(MLPmodel.state_dict()))
+                bestmodel = copy.deepcopy(MLPmodel)
+                if verbose:
+                    print(round(max_v_a, 3), "----------saved-----------")
+        if epoch_val_loss > v and epoch > 60:
             break
 
-    return MLPmodel, max_v_a, epoch
+    return bestmodel, max_v_a, epoch
+
+
+def eval_mlp(model, dm, sim_test, acc_fn = F1, threshold = 0.5, verbose = True):
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    X_test = torch.from_numpy(sim_test).float().to(device)
+    Y_test = torch.from_numpy(dm.Y_test).float().to(device)
+    criterion = nn.BCELoss()
+    model.eval()
+    val_pred = model(X_test)
+    val_loss = criterion(val_pred, Y_test)
+    val_acc = acc_fn(val_pred, Y_test, threshold=threshold)
+    if verbose:
+        print("threshold:", threshold," validation loss:",round(float(val_loss), 4),"validation accuracy", round(float(val_acc), 3))
+    return val_acc
 
 
 
