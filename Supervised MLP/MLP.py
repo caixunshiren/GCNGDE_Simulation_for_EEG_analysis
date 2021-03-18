@@ -74,7 +74,7 @@ class F1_Loss(nn.Module):
 
 
 from sklearn.metrics import f1_score as F1_score
-from sklearn.metrics import precision_score, recall_score
+from sklearn.metrics import precision_score, recall_score, roc_auc_score
 
 
 def accuracy(X, Y, threshold=0.5):
@@ -84,19 +84,6 @@ def accuracy(X, Y, threshold=0.5):
 
 
 def F1(y_pred, y_true, threshold=0.5):
-    '''
-    tp = (y_true * y_pred).sum().to(torch.float32)
-    tn = ((1 - y_true) * (1 - y_pred)).sum().to(torch.float32)
-    fp = ((1 - y_true) * y_pred).sum().to(torch.float32)
-    fn = (y_true * (1 - y_pred)).sum().to(torch.float32)
-
-    epsilon = 1e-7
-
-    precision = tp / (tp + fp + epsilon)
-    recall = tp / (tp + fn + epsilon)
-
-    f1 = 2* (precision*recall) / (precision + recall + epsilon)
-    '''
     y_pred = y_pred > threshold
     f1 = F1_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
 
@@ -112,6 +99,125 @@ def recall(y_pred, y_true, threshold=0.5):
     y_pred = y_pred > threshold
     return recall_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
 
+def auc(y_pred, y_true, threshold = 0.5):
+    y_pred = y_pred > threshold
+    return roc_auc_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
+
+
+def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, autostop_decay=0.995, print_summary=True, verbose=True):
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    MLPmodel = MLP(sim_train.shape[1], parameters['n_layers'], parameters['layer_size_factor'],
+                   parameters['dropout']).to(device)
+    X_train = torch.from_numpy(sim_train).float().to(device)
+    X_test = torch.from_numpy(sim_test).float().to(device)
+    Y_train = torch.from_numpy(dm.Y_train).float().to(device)
+    Y_test = torch.from_numpy(dm.Y_test).float().to(device)
+
+    optimizer = torch.optim.Adam(MLPmodel.parameters(), lr=parameters['learning_rate'], betas=parameters['betas'],
+                                 eps=parameters['eps'], weight_decay=parameters['weight_decay'], amsgrad=False)
+    criterion = nn.BCELoss()
+    # criterion = F1_Loss()
+
+    max_v_a = 0
+    bestmodel = None
+
+    if print_summary:
+        print(MLPmodel)
+        summary(MLPmodel, (31, 31))
+
+    n_epochs = parameters['num_epochs']
+    batch_size = parameters['batch_size']
+
+    # early stopping
+    beta = autostop_decay
+    epoch = 0
+    V = 0
+    while (True):
+        # X is a torch Variable
+        permutation = torch.randperm(X_train.shape[0])
+        t_l = 0
+        v_l = 0
+        t_a = 0
+        v_a = 0
+        n_b = 0
+        val_acc = 0
+        epoch += 1
+
+        for i in range(0, X_train.shape[0], batch_size):
+            optimizer.zero_grad()
+
+            indices = permutation[i:i + batch_size] if i + batch_size < X_train.shape[0] else permutation[i:]
+            batch_x_train = X_train[indices, :, :]
+            batch_y_train = Y_train[indices, :]
+
+            MLPmodel.train()
+            train_pred = MLPmodel(batch_x_train)
+            train_loss = criterion(train_pred, batch_y_train)
+            train_loss.backward()
+            optimizer.step()
+            train_acc = acc_fn(train_pred, batch_y_train, threshold=0.5)
+
+            t_l += float(train_loss)
+            t_a += float(train_acc)
+            n_b += 1
+
+        # get val accuracy
+        MLPmodel.eval()
+        for i in range(5, 100, 5):
+            t = i / 100;
+            val_pred = MLPmodel(X_test)
+            val_loss = criterion(val_pred, Y_test)
+            tva = acc_fn(val_pred, Y_test, threshold=t)
+            if tva > val_acc:
+                val_acc = tva
+
+        v_l += float(val_loss)
+        v_a += float(val_acc)
+
+        epoch_val_loss = v_l
+        if epoch == 1:
+            v = epoch_val_loss
+        else:
+            v = beta * v + (1 - beta) * epoch_val_loss
+
+        if verbose:
+            print("Epoch:", epoch, "  Train loss:", round(t_l / n_b, 4), "  Train accuracy:", round(t_a / n_b, 3),
+                  "  Val loss:", round(v_l, 4), "  Val accuracy:", round(v_a, 3), "   weighted Val loss:",
+                  round(v, 4))
+        if v_a > max_v_a:
+            max_v_a = v_a
+            # bestmodel = MLP(sim_train.shape[1], parameters['n_layers'], parameters['layer_size_factor'], parameters['dropout']).to(device)
+            # bestmodel.load_state_dict(copy.deepcopy(MLPmodel.state_dict()))
+            bestmodel = copy.deepcopy(MLPmodel)
+            print(round(max_v_a, 3), "----------saved-----------")
+        if epoch_val_loss > v and epoch > 60:
+            break
+
+    return bestmodel, max_v_a, epoch
+
+
+
+
+def eval_mlp(model, sim_test, dm, threshold = 0.5, verbose = True):
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    X_test = torch.from_numpy(sim_test).float().to(device)
+    Y_test = torch.from_numpy(dm.Y_test).float().to(device)
+    criterion = nn.BCELoss()
+    model.eval()
+    val_pred = model(X_test)
+    val_loss = criterion(val_pred, Y_test)
+    F1_acc = F1(val_pred, Y_test, threshold=threshold)
+    p_acc = precision(val_pred, Y_test, threshold=threshold)
+    r_acc = recall(val_pred, Y_test, threshold=threshold)
+    auc_acc = auc(val_pred, Y_test, threshold=threshold)
+    if verbose:
+        print("threshold:", threshold," validation loss:",round(float(val_loss), 4),"F1 accuracy", round(float(F1_acc), 3), "Precision accuracy", round(float(p_acc), 3), "Recall accuracy", round(float(r_acc), 3), "AUC accuracy:", round(float(auc_acc), 3))
+    return F1_acc
+
+
+
+
+'''
 def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, autostop_decay=0.995, print_summary=True, verbose=True, saving = True):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     MLPmodel = MLP(sim_train.shape[1], parameters['n_layers'], parameters['layer_size_factor'],
@@ -204,20 +310,4 @@ def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, autostop_decay=0.9
             break
 
     return bestmodel, max_v_a, epoch
-
-
-def eval_mlp(model, dm, sim_test, acc_fn = F1, threshold = 0.5, verbose = True):
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    X_test = torch.from_numpy(sim_test).float().to(device)
-    Y_test = torch.from_numpy(dm.Y_test).float().to(device)
-    criterion = nn.BCELoss()
-    model.eval()
-    val_pred = model(X_test)
-    val_loss = criterion(val_pred, Y_test)
-    val_acc = acc_fn(val_pred, Y_test, threshold=threshold)
-    if verbose:
-        print("threshold:", threshold," validation loss:",round(float(val_loss), 4),"validation accuracy", round(float(val_acc), 3))
-    return val_acc
-
-
-
+'''
