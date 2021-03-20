@@ -2,6 +2,7 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.linalg import fractional_matrix_power
+from DataManager import *
 
 
 #shows heatmap a 2D matrix
@@ -61,3 +62,24 @@ def load_patient_data(filepath, verbose = True):
         X_test = variables["X_test"]
         ax.plot(np.linspace(0, 10, X_train.shape[0]), X_train[:,5,0])
     return variables
+
+def visualize_avg_sim_matrix(dm, sim_train, sim_test):
+    ictal_sum = np.zeros(sim_train[0][:,:].shape)
+    normal_sum = np.zeros(sim_train[0][:,:].shape)
+    tc = 0
+    ni = 0
+    nn = 0
+    for i in range(sim_train.shape[0]):
+            if dm.Y_train[tc,0] == 1:
+                ictal_sum = ictal_sum + sim_train[i,:,:]
+                ni+=1
+            else:
+                normal_sum = normal_sum + sim_train[i,:,:]
+                nn+=1
+            tc+=1
+    ictal_sum = ictal_sum / ni
+    normal_sum = normal_sum / nn
+    print("Average ictal")
+    show_heat_map(ictal_sum)
+    print("Average Non-Ictal")
+    show_heat_map(normal_sum)
