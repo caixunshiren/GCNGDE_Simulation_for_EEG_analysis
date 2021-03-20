@@ -1,3 +1,13 @@
+
+RK4 = ((  0,),
+       (1/2, 1/2,),
+       (1/2,   0,  1/2,),
+       (  1,   0,    0,   1,),
+       (1/6, 1/3, 1/3, 1/6,))
+
+EF = ((0,),
+      (1,))
+
 def explicit_RK(b_tableau, f, x0, t0, t1, N):
     h = (t1 - t0) / float(N)  # calculate step size
     x = x0  # initialize saved dynamics
