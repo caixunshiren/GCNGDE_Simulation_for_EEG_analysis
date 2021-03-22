@@ -75,7 +75,7 @@ class F1_Loss(nn.Module):
 
 from sklearn.metrics import f1_score as F1_score
 from sklearn.metrics import precision_score, recall_score, roc_auc_score
-
+from sklearn import metrics
 
 def accuracy(X, Y, threshold=0.5):
     X = (X >= threshold)
@@ -102,6 +102,10 @@ def recall(y_pred, y_true, threshold=0.5):
 def auc(y_pred, y_true, threshold = 0.5):
     y_pred = y_pred > threshold
     return roc_auc_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
+
+def auc2(y_pred, y_true):
+    fpr, tpr, thresholds = metrics.roc_curve(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy(), pos_label=1)
+    return metrics.auc(fpr, tpr)
 
 
 def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, autostop_decay=0.995, print_summary=True, verbose=True):
@@ -193,7 +197,13 @@ def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, autostop_decay=0.9
         if epoch_val_loss > v and epoch > 60:
             break
 
-    return bestmodel, max_v_a, epoch
+    checkpoint = {
+        'parameters': parameters,
+        'state_dict': MLPmodel.state_dict(),
+        'optimizer': optimizer.state_dict()
+    }
+    
+    return bestmodel, max_v_a, epoch, checkpoint
 
 
 
@@ -209,12 +219,19 @@ def eval_mlp(model, sim_test, dm, threshold = 0.5, verbose = True):
     F1_acc = F1(val_pred, Y_test, threshold=threshold)
     p_acc = precision(val_pred, Y_test, threshold=threshold)
     r_acc = recall(val_pred, Y_test, threshold=threshold)
-    auc_acc = auc(val_pred, Y_test, threshold=threshold)
+    #auc_acc = auc(val_pred, Y_test, threshold=threshold)
+    auc_acc = auc2(val_pred, Y_test)
     if verbose:
         print("threshold:", threshold," validation loss:",round(float(val_loss), 4),"F1 accuracy", round(float(F1_acc), 3), "Precision accuracy", round(float(p_acc), 3), "Recall accuracy", round(float(r_acc), 3), "AUC accuracy:", round(float(auc_acc), 3))
     return F1_acc
 
+def save_ckp(state, f_path):
+    torch.save(state, f_path)
+    print("model saved")
 
+def load_ckp(checkpoint_path):
+    checkpoint = torch.load(checkpoint_path)
+    return checkpoint
 
 
 '''

@@ -63,14 +63,16 @@ def train_GDE(A, X_train, X_test, checkpoint, device_name = 'cpu',load=False, pr
     for epoch in range(1, n_epochs + 1):
 
         permutation = torch.randperm(input_features.shape[0])
+        permutation_v = torch.randperm(valid_features.shape[0])
 
         for i in tqdm(range(0, input_features.shape[0], batch_size)):
             model.train()
             optimizer.zero_grad()
 
             indices = permutation[i:i + batch_size] if i + batch_size < input_features.shape[0] else permutation[i:]
+            indices_v = permutation_v[i:i + batch_size] if i + batch_size < valid_features.shape[0] else permutation_v[i:]
             batch_x = input_features[indices, :, :]
-            batch_v = valid_features[indices, :, :]
+            batch_v = valid_features[indices_v, :, :]
 
             sim_matrix = model(batch_x).to(device)
             train_loss = criterion(sim_matrix, A)
