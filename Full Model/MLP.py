@@ -31,6 +31,59 @@ class MLP(nn.Module):
             x = layer(x)
         return x
 
+# --- CrossBar Implementation --- #
+class Batched_VMM(torch.autograd.Function):
+    #Modified from Louis: Custom pytorch autograd function for crossbar VMM operation
+    @staticmethod
+    def forward(ctx, ticket, x, W, b):
+        ctx.save_for_backward(x, W, b)
+        return ticket.vmm(x) + b
+        
+    @staticmethod
+    def backward(ctx, dx):
+        x, W, b = ctx.saved_tensors
+        grad_input = W.t().mm(dx)
+        grad_weight = dx.mm(x.t())
+        grad_bias = dx
+        return (None, grad_input, grad_weight, grad_bias)
+
+class Linear_block(nn.Module):
+    def __init__(self, in_size, out_size, cb, w = None, b = None):
+        if w is not None and b is not None:
+            self.w = w
+            self.b = b
+        else:
+            self.w = nn.Parameter(torch.rand(out_size, in_size))
+            self.b = nn.Parameter(torch.rand(out_size, 1))
+        self.cb = cb
+        self.f = Batched_VMM
+
+class MLPwCB(nn.Module):
+    def __init__(self, matrix_dim, cb, weights=None, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5]):
+        super(MLP, self).__init__()
+        feature_len = torch.triu_indices(matrix_dim, matrix_dim).shape[1]
+        self.layers = nn.ModuleList()
+        for i in range(n_layers):
+            if dropout[i] > 0:
+                self.layers.append(nn.Dropout(dropout[i]))
+            if i < n_layers - 1:
+                self.layers.append(
+                    nn.Linear(int(feature_len // layer_size_factor[i]), int(feature_len // layer_size_factor[i + 1])))
+                self.layers.append(nn.ReLU())
+            else:
+                self.layers.append(nn.Linear(int(feature_len // layer_size_factor[i]), 1))
+                self.layers.append(nn.Sigmoid())
+
+    def flatten(self, sim_matrices):
+        tri_indices = torch.triu_indices(sim_matrices.shape[1], sim_matrices.shape[2])
+        return sim_matrices[:, tri_indices[0, :], tri_indices[1, :]]
+
+    def forward(self, sim_matrices):
+        x = self.flatten(sim_matrices)
+        for layer in self.layers:
+            x = layer(x)
+        return x
+# --- --- --- --- --- --- --- --- --- --- #
 
 class F1_Loss(nn.Module):
     '''Calculate F1 score. Can work with gpu tensors
@@ -262,4 +315,5 @@ def load_model(checkpoint, A, device_name ='cpu' ):
     optimizer.load_state_dict(checkpoint['optimizer'])
     return model, optimizer
 
-def pca()
+def pca():
+    pass
