@@ -15,6 +15,25 @@ def load_ckp(checkpoint_path):
     checkpoint = torch.load(checkpoint_path)
     return checkpoint
 
+def load_model(checkpoint, A, device_name ='cpu' ):
+    if device_name == 'cuda':
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        print("device set to cuda") if device == torch.device('cuda') else print("cuda is not available")
+    elif device_name == 'cpu':
+        device = torch.device('cpu')
+        print("device set to cpu")
+    else:
+        device = torch.device('cpu')
+        print("unknown device")
+    
+    parameters = checkpoint['parameters']
+    model = ODENet(parameters['solver'], parameters['body'], parameters['hidden_layers'], A,
+                   parameters['solver_params']).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=parameters['learning_rate'],
+                                 weight_decay=parameters['weight_decay'])
+    model.load_state_dict(checkpoint['state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    return model, optimizer
 
 # takes in numpy arrays
 def train_GDE(A, X_train, X_test, checkpoint, device_name = 'cpu',load=False, print_summary=False):
