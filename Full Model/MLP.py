@@ -37,7 +37,9 @@ class Batched_VMM(torch.autograd.Function):
     @staticmethod
     def forward(ctx, ticket, x, W, b):
         ctx.save_for_backward(x, W, b)
-        return ticket.vmm(x) + b
+        for i in range x.shape[1]:
+            x[:,i] = ticket.vmm(x[:,i]) + b
+        return x
         
     @staticmethod
     def backward(ctx, dx):
@@ -48,18 +50,23 @@ class Batched_VMM(torch.autograd.Function):
         return (None, grad_input, grad_weight, grad_bias)
 
 class Linear_block(nn.Module):
-    def __init__(self, in_size, out_size, cb, w = None, b = None):
+    def __init__(self, in_size, out_size, cb_param, w = None, b = None):
         if w is not None and b is not None:
             self.w = w
             self.b = b
         else:
-            self.w = nn.Parameter(torch.rand(out_size, in_size))
-            self.b = nn.Parameter(torch.rand(out_size, 1))
-        self.cb = cb
-        self.f = Batched_VMM
+            stdv = 1. / in_size ** 1 / 2
+            self.w = nn.Parameter(torch.Tensor(out_size, in_size)).data.uniform_(-stdv, stdv)
+            self.b = nn.Parameter(torch.Tensor(out_size, 1)).data.uniform_(-stdv, stdv)
+        self.cb = crossbar(cb_param)
+        self.f = Batched_VMM()
+        self.ticket = self.cb.register_linear(self.w)
+        
+    def forward(self, x):
+        return self.f.apply(self.ticket, x, self.W, self.b)
 
 class MLPwCB(nn.Module):
-    def __init__(self, matrix_dim, cb, weights=None, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5]):
+    def __init__(self, matrix_dim, cb_params, weights=None, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5]):
         super(MLP, self).__init__()
         feature_len = torch.triu_indices(matrix_dim, matrix_dim).shape[1]
         self.layers = nn.ModuleList()
@@ -67,11 +74,16 @@ class MLPwCB(nn.Module):
             if dropout[i] > 0:
                 self.layers.append(nn.Dropout(dropout[i]))
             if i < n_layers - 1:
-                self.layers.append(
-                    nn.Linear(int(feature_len // layer_size_factor[i]), int(feature_len // layer_size_factor[i + 1])))
+                if wieghts is not None: 
+                    self.layers.append(
+                        Linear_block(int(feature_len // layer_size_factor[i]), int(feature_len // layer_size_factor[i + 1]), cb_params[i],weights[i]['w'], weights[i]['b']))
+                else:
+                    self.layers.append(
+                        Linear_block(int(feature_len // layer_size_factor[i]), int(feature_len // layer_size_factor[i + 1]), cb_params[i]))
                 self.layers.append(nn.ReLU())
             else:
-                self.layers.append(nn.Linear(int(feature_len // layer_size_factor[i]), 1))
+                if weights is not None:
+                    self.layers.append(Linear_block(int(feature_len // layer_size_factor[i]), 1, cb_params[i]))
                 self.layers.append(nn.Sigmoid())
 
     def flatten(self, sim_matrices):
@@ -83,6 +95,9 @@ class MLPwCB(nn.Module):
         for layer in self.layers:
             x = layer(x)
         return x
+    
+def MLPtoMLPwCB(checkpoint, cb_params):
+    pass
 # --- --- --- --- --- --- --- --- --- --- #
 
 class F1_Loss(nn.Module):
