@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchsummary import summary
 import copy
-
+from crossbar import crossbar, ticket
 
 class MLP(nn.Module):
     def __init__(self, matrix_dim, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5]):
@@ -37,7 +37,7 @@ class Batched_VMM(torch.autograd.Function):
     @staticmethod
     def forward(ctx, ticket, x, W, b):
         ctx.save_for_backward(x, W, b)
-        for i in range x.shape[1]:
+        for i in range (x.shape[1]):
             x[:,i] = ticket.vmm(x[:,i]) + b
         return x
         
@@ -66,7 +66,7 @@ class Linear_block(nn.Module):
         return self.f.apply(self.ticket, x, self.W, self.b)
 
 class MLPwCB(nn.Module):
-    def __init__(self, matrix_dim, cb_params, weights=None, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5]):
+    def __init__(self, matrix_dim, cb_params, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5], weights=None,):
         super(MLP, self).__init__()
         feature_len = torch.triu_indices(matrix_dim, matrix_dim).shape[1]
         self.layers = nn.ModuleList()
@@ -96,8 +96,21 @@ class MLPwCB(nn.Module):
             x = layer(x)
         return x
     
-def MLPtoMLPwCB(checkpoint, cb_params):
-    pass
+def MLPtoMLPwCB(checkpoint, in_matrix_dim, cb_params):
+    parameters = checkpoint['parameters']
+    device = torch.device('cpu')
+    weights = {}
+    for param in checkpoint['state_dict']:
+        print(param)
+    '''
+    model = MLPwCB(in_matrix_dim, cb_params,parameters['n_layers'], parameters['layer_size_factor'],
+                   parameters['dropout'], weights).to(device)
+    
+    optimizer = torch.optim.Adam(model.parameters(), lr=parameters['learning_rate'], betas=parameters['betas'],
+                                 eps=parameters['eps'], weight_decay=parameters['weight_decay'], amsgrad=False)
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    return model, optimizer
+    '''
 # --- --- --- --- --- --- --- --- --- --- #
 
 class F1_Loss(nn.Module):
@@ -310,7 +323,7 @@ def load_ckp(checkpoint_path):
     checkpoint = torch.load(checkpoint_path)
     return checkpoint
 
-def load_model(checkpoint, A, device_name ='cpu' ):
+def load_model(checkpoint, in_matrix_dim, device_name ='cpu' ):
     if device_name == 'cuda':
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         print("device set to cuda") if device == torch.device('cuda') else print("cuda is not available")
@@ -322,7 +335,7 @@ def load_model(checkpoint, A, device_name ='cpu' ):
         print("unknown device")
     
     parameters = checkpoint['parameters']
-    model = MLP(A.shape[1], parameters['n_layers'], parameters['layer_size_factor'],
+    model = MLP(in_matrix_dim, parameters['n_layers'], parameters['layer_size_factor'],
                    parameters['dropout']).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=parameters['learning_rate'], betas=parameters['betas'],
                                  eps=parameters['eps'], weight_decay=parameters['weight_decay'], amsgrad=False)
