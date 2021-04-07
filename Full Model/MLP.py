@@ -10,6 +10,10 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         feature_len = torch.triu_indices(matrix_dim, matrix_dim).shape[1]
         self.layers = nn.ModuleList()
+        self.matrix_dim = matrix_dim
+        self.n_layers=n_layers
+        self.layer_size_factor=layer_size_factor
+        self.dropout=dropout
         for i in range(n_layers):
             if dropout[i] > 0:
                 self.layers.append(nn.Dropout(dropout[i]))
@@ -36,14 +40,23 @@ class Batched_VMM(torch.autograd.Function):
     #Modified from Louis: Custom pytorch autograd function for crossbar VMM operation
     @staticmethod
     def forward(ctx, ticket, x, W, b):
+        #x shape is m x n -> convert to nxm -> the convert back
+        x = torch.transpose(x,0,1)
         ctx.save_for_backward(x, W, b)
+        print("debug BVMM: x is size", x.shape)
+        print("debug W:", W.shape)
+        print("debug b:", b.shape)
+        #print(x[:,0].size, x[:,0].size(1))
         for i in range (x.shape[1]):
-            x[:,i] = ticket.vmm(x[:,i]) + b
-        return x
+            #temp = ticket.vmm(torch.unsqueeze(x[:,i],1))
+            #print("debug temp:", temp.shape)
+            x[:,i] = torch.squeeze(ticket.vmm(torch.unsqueeze(x[:,i],1))) + b
+        return torch.transpose(x,0,1)
         
     @staticmethod
     def backward(ctx, dx):
-        x, W, b = ctx.saved_tensors
+        #worry about this later
+        x, W, b = ctx.saved_tensors #x is nxm
         grad_input = W.t().mm(dx)
         grad_weight = dx.mm(x.t())
         grad_bias = dx
@@ -51,6 +64,7 @@ class Batched_VMM(torch.autograd.Function):
 
 class Linear_block(nn.Module):
     def __init__(self, in_size, out_size, cb_param, w = None, b = None):
+        super(Linear_block, self).__init__()
         if w is not None and b is not None:
             self.w = w
             self.b = b
@@ -60,21 +74,22 @@ class Linear_block(nn.Module):
             self.b = nn.Parameter(torch.Tensor(out_size, 1)).data.uniform_(-stdv, stdv)
         self.cb = crossbar(cb_param)
         self.f = Batched_VMM()
+        #print("debug:",self.w.shape)
         self.ticket = self.cb.register_linear(self.w)
         
     def forward(self, x):
-        return self.f.apply(self.ticket, x, self.W, self.b)
+        return self.f.apply(self.ticket, x, self.w, self.b)
 
 class MLPwCB(nn.Module):
     def __init__(self, matrix_dim, cb_params, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5], weights=None,):
-        super(MLP, self).__init__()
+        super(MLPwCB, self).__init__()
         feature_len = torch.triu_indices(matrix_dim, matrix_dim).shape[1]
         self.layers = nn.ModuleList()
         for i in range(n_layers):
             if dropout[i] > 0:
                 self.layers.append(nn.Dropout(dropout[i]))
             if i < n_layers - 1:
-                if wieghts is not None: 
+                if weights is not None: 
                     self.layers.append(
                         Linear_block(int(feature_len // layer_size_factor[i]), int(feature_len // layer_size_factor[i + 1]), cb_params[i],weights[i]['w'], weights[i]['b']))
                 else:
@@ -83,7 +98,13 @@ class MLPwCB(nn.Module):
                 self.layers.append(nn.ReLU())
             else:
                 if weights is not None:
-                    self.layers.append(Linear_block(int(feature_len // layer_size_factor[i]), 1, cb_params[i]))
+                    #self.layers.append(Linear_block(int(feature_len // layer_size_factor[i]), 1, cb_params[i], weights[i]['w'], weights[i]['b']))
+                    self.layers.append(nn.Linear(int(feature_len // layer_size_factor[i]), 1))
+                    self.layers[-1].weights = nn.Parameter(weights[i]['w'])
+                    self.layers[-1].bias = nn.Parameter(weights[i]['b'])
+                else:
+                    #self.layers.append(Linear_block(int(feature_len // layer_size_factor[i]), 1, cb_params[i]))
+                    self.layers.append(nn.Linear(int(feature_len // layer_size_factor[i]), 1))
                 self.layers.append(nn.Sigmoid())
 
     def flatten(self, sim_matrices):
@@ -91,7 +112,9 @@ class MLPwCB(nn.Module):
         return sim_matrices[:, tri_indices[0, :], tri_indices[1, :]]
 
     def forward(self, sim_matrices):
+        print("debug MLPwCB: sim_matrices size is", sim_matrices.shape)
         x = self.flatten(sim_matrices)
+        print("debug MLPwCB: x size is", x.shape)
         for layer in self.layers:
             x = layer(x)
         return x
@@ -111,6 +134,23 @@ def MLPtoMLPwCB(checkpoint, in_matrix_dim, cb_params):
     optimizer.load_state_dict(checkpoint['optimizer'])
     return model, optimizer
     '''
+    
+'''def eval_mlpwcb(model, sim_test, dm, device_name ='cpu', threshold = 0.5, verbose = True):
+    device = torch.device('cpu')
+ 
+    X_test = torch.from_numpy(sim_test).float().to(device)
+    Y_test = torch.from_numpy(dm.Y_test).float().to(device)
+    criterion = nn.BCELoss()
+    model.eval()
+    val_pred = model(X_test)
+    val_loss = criterion(val_pred, Y_test)
+    F1_acc = F1(val_pred, Y_test, threshold=threshold)
+    p_acc = precision(val_pred, Y_test, threshold=threshold)
+    r_acc = recall(val_pred, Y_test, threshold=threshold)
+    auc_acc = auc2(val_pred, Y_test)
+    if verbose:
+        print("threshold:", threshold," validation loss:",round(float(val_loss), 4),"F1 accuracy", round(float(F1_acc), 3), "Precision accuracy", round(float(p_acc), 3), "Recall accuracy", round(float(r_acc), 3), "AUC accuracy:", round(float(auc_acc), 3))
+    return F1_acc'''
 # --- --- --- --- --- --- --- --- --- --- #
 
 class F1_Loss(nn.Module):
