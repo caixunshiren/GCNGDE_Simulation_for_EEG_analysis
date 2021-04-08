@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torchsummary import summary
 import copy
 from crossbar import crossbar, ticket
+from tqdm import tqdm
 
 class MLP(nn.Module):
     def __init__(self, matrix_dim, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5]):
@@ -47,11 +48,12 @@ class Batched_VMM(torch.autograd.Function):
         print("debug W:", W.shape)
         print("debug b:", b.shape)
         #print(x[:,0].size, x[:,0].size(1))
-        for i in range (x.shape[1]):
+        x_out = torch.zeros(W.shape[0], x.shape[1])
+        for i in tqdm(range(x.shape[1])):
             #temp = ticket.vmm(torch.unsqueeze(x[:,i],1))
             #print("debug temp:", temp.shape)
-            x[:,i] = torch.squeeze(ticket.vmm(torch.unsqueeze(x[:,i],1))) + b
-        return torch.transpose(x,0,1)
+            x_out[:,i] = torch.squeeze(ticket.vmm(torch.unsqueeze(x[:,i],1))) + b
+        return torch.transpose(x_out,0,1)
         
     @staticmethod
     def backward(ctx, dx):
@@ -66,8 +68,9 @@ class Linear_block(nn.Module):
     def __init__(self, in_size, out_size, cb_param, w = None, b = None):
         super(Linear_block, self).__init__()
         if w is not None and b is not None:
-            self.w = w
-            self.b = b
+            self.w = nn.Parameter(w)
+            self.b = nn.Parameter(b)
+            print("--- weight initialized successfually ---")
         else:
             stdv = 1. / in_size ** 1 / 2
             self.w = nn.Parameter(torch.Tensor(out_size, in_size)).data.uniform_(-stdv, stdv)
@@ -75,10 +78,15 @@ class Linear_block(nn.Module):
         self.cb = crossbar(cb_param)
         self.f = Batched_VMM()
         #print("debug:",self.w.shape)
-        self.ticket = self.cb.register_linear(self.w)
+        self.ticket = self.cb.register_linear(torch.transpose(self.w, 0,1))
         
     def forward(self, x):
         return self.f.apply(self.ticket, x, self.w, self.b)
+    
+    def remap(self):
+        #Should call the remap crossbar function after 1 or a couple update steps 
+        self.cb.clear()
+        self.ticket = self.cb.register_linear(torch.transpose(self.w, 0,1))
 
 class MLPwCB(nn.Module):
     def __init__(self, matrix_dim, cb_params, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5], weights=None,):
@@ -98,13 +106,13 @@ class MLPwCB(nn.Module):
                 self.layers.append(nn.ReLU())
             else:
                 if weights is not None:
-                    #self.layers.append(Linear_block(int(feature_len // layer_size_factor[i]), 1, cb_params[i], weights[i]['w'], weights[i]['b']))
-                    self.layers.append(nn.Linear(int(feature_len // layer_size_factor[i]), 1))
-                    self.layers[-1].weights = nn.Parameter(weights[i]['w'])
-                    self.layers[-1].bias = nn.Parameter(weights[i]['b'])
+                    self.layers.append(Linear_block(int(feature_len // layer_size_factor[i]), 1, cb_params[i], weights[i]['w'], weights[i]['b']))
+                    #self.layers.append(nn.Linear(int(feature_len // layer_size_factor[i]), 1))
+                    #self.layers[-1].weights = nn.Parameter(weights[i]['w'])
+                    #self.layers[-1].bias = nn.Parameter(weights[i]['b'])
                 else:
-                    #self.layers.append(Linear_block(int(feature_len // layer_size_factor[i]), 1, cb_params[i]))
-                    self.layers.append(nn.Linear(int(feature_len // layer_size_factor[i]), 1))
+                    self.layers.append(Linear_block(int(feature_len // layer_size_factor[i]), 1, cb_params[i]))
+                    #self.layers.append(nn.Linear(int(feature_len // layer_size_factor[i]), 1))
                 self.layers.append(nn.Sigmoid())
 
     def flatten(self, sim_matrices):
@@ -117,6 +125,8 @@ class MLPwCB(nn.Module):
         print("debug MLPwCB: x size is", x.shape)
         for layer in self.layers:
             x = layer(x)
+            print(x.shape)
+        print(x.shape)
         return x
     
 def MLPtoMLPwCB(checkpoint, in_matrix_dim, cb_params):
