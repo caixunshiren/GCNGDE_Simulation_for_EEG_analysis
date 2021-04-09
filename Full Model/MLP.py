@@ -129,38 +129,18 @@ class MLPwCB(nn.Module):
         print(x.shape)
         return x
     
-def MLPtoMLPwCB(checkpoint, in_matrix_dim, cb_params):
-    parameters = checkpoint['parameters']
+def MLPtoMLPwCB(srcmodel, cb_params):
     device = torch.device('cpu')
-    weights = {}
-    for param in checkpoint['state_dict']:
-        print(param)
-    '''
-    model = MLPwCB(in_matrix_dim, cb_params,parameters['n_layers'], parameters['layer_size_factor'],
-                   parameters['dropout'], weights).to(device)
-    
-    optimizer = torch.optim.Adam(model.parameters(), lr=parameters['learning_rate'], betas=parameters['betas'],
-                                 eps=parameters['eps'], weight_decay=parameters['weight_decay'], amsgrad=False)
-    optimizer.load_state_dict(checkpoint['optimizer'])
-    return model, optimizer
-    '''
-    
-'''def eval_mlpwcb(model, sim_test, dm, device_name ='cpu', threshold = 0.5, verbose = True):
-    device = torch.device('cpu')
- 
-    X_test = torch.from_numpy(sim_test).float().to(device)
-    Y_test = torch.from_numpy(dm.Y_test).float().to(device)
-    criterion = nn.BCELoss()
-    model.eval()
-    val_pred = model(X_test)
-    val_loss = criterion(val_pred, Y_test)
-    F1_acc = F1(val_pred, Y_test, threshold=threshold)
-    p_acc = precision(val_pred, Y_test, threshold=threshold)
-    r_acc = recall(val_pred, Y_test, threshold=threshold)
-    auc_acc = auc2(val_pred, Y_test)
-    if verbose:
-        print("threshold:", threshold," validation loss:",round(float(val_loss), 4),"F1 accuracy", round(float(F1_acc), 3), "Precision accuracy", round(float(p_acc), 3), "Recall accuracy", round(float(r_acc), 3), "AUC accuracy:", round(float(auc_acc), 3))
-    return F1_acc'''
+    weights = []
+    for i, param_tensor in enumerate(srcmodel.state_dict()):
+        print(i, param_tensor, srcmodel.state_dict()[param_tensor].shape)
+        if i%2 == 0:
+            weights.append({"w": srcmodel.state_dict()[param_tensor]})
+        else:
+            weights[-1]["b"] = srcmodel.state_dict()[param_tensor]
+    model = MLP.MLPwCB(srcmodel.matrix_dim, cb_params, srcmodel.n_layers, srcmodel.layer_size_factor,
+                   srcmodel.dropout, weights).to(device)
+    return model
 # --- --- --- --- --- --- --- --- --- --- #
 
 class F1_Loss(nn.Module):
