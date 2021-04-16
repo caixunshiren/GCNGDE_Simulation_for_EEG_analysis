@@ -126,3 +126,65 @@ class sim_loss(torch.nn.Module):
 
         obj_vector = (torch.sum(A_tf * sim_matrix, dim=2, keepdim=True) - abs_N * logexp_S)
         return -(1 / M) * torch.sum(obj_vector)
+
+
+# --- CrossBar Implementation --- #
+class Batched_MMM(torch.autograd.Function):
+    #Modified from Louis: Custom pytorch autograd function for crossbar VMM operation
+    @staticmethod
+    def forward(ctx, ticket, x, W, b):
+        #x shape is m x n -> convert to nxm -> the convert back
+        x = torch.transpose(x,0,1)
+        ctx.save_for_backward(x, W, b)
+        print("debug BMMM: x is size", x.shape)
+        print("debug W:", W.shape)
+        print("debug b:", b.shape)
+        #print(x[:,0].size, x[:,0].size(1))
+        x_out = torch.zeros(W.shape[0], x.shape[1])
+        for i in tqdm(range(x.shape[1])):
+            #temp = ticket.vmm(torch.unsqueeze(x[:,i],1))
+            #print("debug temp:", temp.shape)
+            x_out[:,i] = torch.squeeze(ticket.vmm(torch.unsqueeze(x[:,i],1))) + b
+        return torch.transpose(x_out,0,1)
+        
+    @staticmethod
+    def backward(ctx, dx):
+        #worry about this later
+        x, W, b = ctx.saved_tensors #x is nxm
+        grad_input = W.t().mm(dx)
+        grad_weight = dx.mm(x.t())
+        grad_bias = dx
+        return (None, grad_input, grad_weight, grad_bias)
+
+class Linear_block(nn.Module):
+    '''
+    Input: tensor with shape m x n x _
+    Weight: matrix of shape _ x n
+    Output: tensor with shape m x _ x _
+    
+    in_size: n
+    out_size: _
+    
+    '''
+    def __init__(self, in_size, out_size, cb_param, w = None, b = None):
+        super(Linear_block, self).__init__()
+        if w is not None and b is not None:
+            self.w = nn.Parameter(w)
+            self.b = nn.Parameter(b)
+            print("--- weight initialized successfually ---")
+        else:
+            stdv = 1. / in_size ** 1 / 2
+            self.w = nn.Parameter(torch.Tensor(out_size, in_size)).data.uniform_(-stdv, stdv)
+            self.b = nn.Parameter(torch.Tensor(out_size, 1)).data.uniform_(-stdv, stdv)
+        self.cb = crossbar(cb_param)
+        self.f = Batched_VMM()
+        #print("debug:",self.w.shape)
+        self.ticket = self.cb.register_linear(torch.transpose(self.w, 0,1))
+        
+    def forward(self, x):
+        return self.f.apply(self.ticket, x, self.w, self.b)
+    
+    def remap(self):
+        #Should call the remap crossbar function after 1 or a couple update steps 
+        self.cb.clear()
+        self.ticket = self.cb.register_linear(torch.transpose(self.w, 0,1))

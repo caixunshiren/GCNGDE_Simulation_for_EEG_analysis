@@ -214,10 +214,12 @@ def auc(y_pred, y_true, threshold = 0.5):
     y_pred = y_pred > threshold
     return roc_auc_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
 
-def auc2(y_pred, y_true):
+def auc2(y_pred, y_true, threshold = None):
     fpr, tpr, thresholds = metrics.roc_curve(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy(), pos_label=1)
     return metrics.auc(fpr, tpr)
 
+def auc_nf(y_pred, y_true, threshold = None):
+    return roc_auc_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
 
 def train_MLP(dm, sim_train, sim_test, parameters, acc_fn=F1, autostop_decay=0.995, print_summary=True, verbose=True):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -341,6 +343,7 @@ def eval_mlp(model, sim_test, dm, device_name ='cpu', threshold = 0.5, verbose =
     r_acc = recall(val_pred, Y_test, threshold=threshold)
     #auc_acc = auc(val_pred, Y_test, threshold=threshold)
     auc_acc = auc2(val_pred, Y_test)
+    #auc_acc = auc_nf(val_pred, Y_test)
     if verbose:
         print("threshold:", threshold," validation loss:",round(float(val_loss), 4),"F1 accuracy", round(float(F1_acc), 3), "Precision accuracy", round(float(p_acc), 3), "Recall accuracy", round(float(r_acc), 3), "AUC accuracy:", round(float(auc_acc), 3))
     return F1_acc

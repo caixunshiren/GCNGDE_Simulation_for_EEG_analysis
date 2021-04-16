@@ -48,6 +48,13 @@ def load_patient_data(filepath, verbose = True):
     f = h5py.File(filepath, 'r')
     for k, v in f.items():
         variables[k] = np.array(v)
+        '''
+        if k == 'X_train' or k == 'X_test':
+            if len(variables[k].shape) == 4:
+                shape = variables[k].shape
+                variables[k] = np.reshape(variables[k], (shape[0]*shape[1], shape[2], shape[3]))
+        '''
+        
         
     if verbose: 
         for key in variables.keys():

@@ -64,6 +64,18 @@ class dataManager:
         self.sd = None
         print("--------data manager successfully initialized--------")
 
+    def __str__(self):
+        printlist = []
+        printlist.append('X_train: shape of' + str(self.X_train.shape))
+        printlist.append('X_test: shape of'+ str(self.X_test.shape))
+        printlist.append('Y_train: shape of'+ str(self.Y_train.shape))
+        printlist.append('Y_test: shape of'+ str(self.Y_test.shape))
+        printlist.append('A_train: shape of'+ str(self.A_train.shape))
+        printlist.append('A_test: shape of'+ str(self.A_test.shape))
+        printlist.append('P_avg_train: shape of'+ str(self.P_avg_train.shape))
+        printlist.append('P_avg_test: shape of'+ str(self.P_avg_test.shape))
+        return '\n'.join(printlist)
+        
     def create_adjacency_matrix(self, X, n):
         '''
         Input types:
@@ -134,11 +146,48 @@ class dataManager:
         self.X_test = self.X_test * self.sd + self.mean
         self.mean = None
         self.sd = None
+        
+    #filter referencce: https://www.sciencedirect.com/science/article/abs/pii/S1388245711003774?via%3Dihub
+    def apply_variance_filter(self, n):
+        ind = np.argsort(get_label_variance(self.X_train, self.Y_train))#[::-1]
+        #print(ind)
+        ind = ind[:n]
+        ind = np.sort(ind)
+        self.X_train = self.X_train[:,ind,:]
+        self.X_test = self.X_test[:,ind,:]
+        
+        # create adjacency matrix again using reduced X_train and X_test
+        self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, n)
+        self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, n)
 
+        print("--------data successfully filtered--------")
+    
+    def dvariance_filter(self):
+        pass
+    
+    def entropy_filter(self):
+        pass
+
+def get_label_variance(X,Y,label = 1):
+    #X shape: MxNxD
+    #Y shape: Mx1
+    #output shape: Nx1
+    #print(np.nonzero(Y == label))
+    X = X[np.nonzero(Y == label)[0],:,:]
+    #print(X.shape)
+    X = np.transpose(X, (0,2,1))
+    X = X.reshape(X.shape[0]*X.shape[1],X.shape[2])
+    #print(X.shape)
+    #print(np.mean(X, axis = 0, keepdims = True).shape)
+    X = (X - np.mean(X, axis = 0, keepdims = True))**2
+    return np.mean(X, axis = 0)
+
+#-------------Archived-------------#
+'''
     def sanity_check(self, t_h, t_l, parent_dir):
-        '''
-        optional function for debugging. prints all pairs with covariance greater than t_h and less than t_l
-        '''
+        
+        #optional function for debugging. prints all pairs with covariance greater than t_h and less than t_l
+        
         # create an averaged signal accross all X_train samples
         X_train_avg = np.mean(self.X_train, axis=0)
         X_bar_train_avg = np.mean(np.mean(self.X_train, axis=2, keepdims=True), axis=0)
@@ -176,3 +225,4 @@ class dataManager:
             ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[1]])
             plt.savefig(parent_dir + '/Covariance and Adjacency Matrix/figures/' + 'low covariance node ' + str(
                 couple[0]) + " and node " + str(couple[1]) + '.png')
+'''
