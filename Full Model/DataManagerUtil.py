@@ -63,12 +63,22 @@ def load_patient_data(filepath, verbose = True):
             print("-----------------------")
         
         print('print sample EGG signal from one node:')
+        '''
         plt.figure()
         ax = plt.axes()
         X_train = variables["X_train"]
         X_test = variables["X_test"]
         ax.plot(np.linspace(0, 10, X_train.shape[0]), X_train[:,5,0])
+        '''
+        plot_signal(variables["X_train"], 5,0)
+        #plot_signal(variables["X_train"], 5,1)
+        #plot_signal(variables["X_train"], 5,2)
     return variables
+
+def plot_signal(data, node, sample):
+    plt.figure()
+    ax = plt.axes()
+    ax.plot(np.linspace(0, 10, data.shape[0]), data[:,node,sample])
 
 def visualize_avg_sim_matrix(dm, sim_train, sim_test):
     ictal_sum = np.zeros(sim_train[0][:,:].shape)

@@ -51,6 +51,7 @@ class dataManager:
         self.train_indices = indices
         self.X_train = self.drop_samples(X_train, indices)
         self.Y_train = self.drop_samples(Y_train, indices)
+        self.threshold = n
 
         self.A_test, self.P_avg_test, indices = self.create_adjacency_matrix(X_test, n)
         self.test_indices = indices
@@ -125,6 +126,7 @@ class dataManager:
         '''
         recompute adjacency matrix A using a new threshold n
         '''
+        self.threshold = n
         self.A_train = (self.P_avg_train > n)
         self.A_test = (self.P_avg_test > n)
 
@@ -148,7 +150,7 @@ class dataManager:
         self.sd = None
         
     #filter referencce: https://www.sciencedirect.com/science/article/abs/pii/S1388245711003774?via%3Dihub
-    def apply_variance_filter(self, n):
+    def apply_variance_filter(self, n):# n is the number of nodes to be kept
         ind = np.argsort(get_label_variance(self.X_train, self.Y_train))#[::-1]
         #print(ind)
         ind = ind[:n]
@@ -157,17 +159,64 @@ class dataManager:
         self.X_test = self.X_test[:,ind,:]
         
         # create adjacency matrix again using reduced X_train and X_test
-        self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, n)
-        self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, n)
+        self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, self.threshold)
+        self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, self.threshold)
 
-        print("--------data successfully filtered--------")
+        print("--------data successfully filtered (variance)--------")
     
-    def dvariance_filter(self):
-        pass
+    def apply_dvariance_filter(self, n):
+        ind = np.argsort(np.absolute(get_label_variance(self.X_train, self.Y_train)-get_label_variance(self.X_train, self.Y_train, 0)))#[::-1]
+        #print(ind)
+        ind = ind[:n]
+        ind = np.sort(ind)
+        self.X_train = self.X_train[:,ind,:]
+        self.X_test = self.X_test[:,ind,:]
+        
+        # create adjacency matrix again using reduced X_train and X_test
+        self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, self.threshold)
+        self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, self.threshold)
+
+        print("--------data successfully filtered (dvariance)--------")
     
     def entropy_filter(self):
         pass
+    
+    def resize_clip(self, clip_size): # clip size must be divisible by the original clip size
+        extend_factor = self.X_train.shape[2]//clip_size
+        self.X_train = self.X_train.reshape(self.X_train.shape[0]* self.X_train.shape[2], self.X_train.shape[1])
+        self.X_train = self.X_train.reshape(self.X_train.shape[0]//clip_size,self.X_train.shape[1],clip_size)
+        self.X_test = self.X_test.reshape(self.X_test.shape[0]* self.X_test.shape[2], self.X_test.shape[1])
+        self.X_test = self.X_test.reshape(self.X_test.shape[0]//clip_size,self.X_test.shape[1],clip_size)
+        self.Y_train = np.matmul(extend_identity(self.Y_train.shape[0], extend_factor),self.Y_train)
+        self.Y_test = np.matmul(extend_identity(self.Y_test.shape[0], extend_factor),self.Y_test)
+        # create adjacency matrix again using resized X_train and X_test
+        #self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, self.threshold)
+        #self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, self.threshold)
 
+def extend_identity(n, extend_factor):
+    '''
+    something like 
+    e.g. n=4, extend factor = 3
+    1
+    1  
+    1          0
+        1
+        1
+        1
+            1
+            1
+            1
+      0         1
+                1
+                1
+    '''
+    identity = np.identity(n)
+    ex_identity = np.zeros((n*extend_factor, n))
+    for i in range(n):
+        for j in range(extend_factor):
+            ex_identity[i*extend_factor+j,:] = identity[i,:]
+    return ex_identity
+        
 def get_label_variance(X,Y,label = 1):
     #X shape: MxNxD
     #Y shape: Mx1
