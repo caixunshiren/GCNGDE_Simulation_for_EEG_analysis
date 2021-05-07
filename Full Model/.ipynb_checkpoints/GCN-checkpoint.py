@@ -105,6 +105,7 @@ class Net(nn.Module):
         self.tail = SimularityMatrix(body_features*2) # size(H_0 + h_u)
 
     def forward(self, h_0, A):
+        #print(h_0.shape)
         x = self.activation(self.head(h_0, A))
         for layer in self.layers:
             x = self.activation(layer(x, A))

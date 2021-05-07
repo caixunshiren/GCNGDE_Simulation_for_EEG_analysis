@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import torch.nn.functional as F
+import torch
 
 '''
 import torch
@@ -193,6 +195,14 @@ class dataManager:
         #self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, self.threshold)
         #self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, self.threshold)
 
+    def mean_pooling_1d(self, size = 5, stride = 4, padding = 0):
+        self.X_train = F.avg_pool1d(torch.from_numpy(self.X_train), size, stride, padding).detach().numpy()
+        self.X_test = F.avg_pool1d(torch.from_numpy(self.X_test), size, stride, padding).detach().numpy()
+        #self.Y_test = F.avg_pool1d(torch.from_numpy(self.Y_test), size, stride, padding).detach().numpy() > 0.5
+        #self.Y_train = F.avg_pool1d(torch.from_numpy(self.Y_train), size, stride, padding).detach().numpy() > 0.5
+        self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, self.threshold)
+        self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, self.threshold)
+        
 def extend_identity(n, extend_factor):
     '''
     something like 
@@ -230,6 +240,8 @@ def get_label_variance(X,Y,label = 1):
     #print(np.mean(X, axis = 0, keepdims = True).shape)
     X = (X - np.mean(X, axis = 0, keepdims = True))**2
     return np.mean(X, axis = 0)
+
+
 
 #-------------Archived-------------#
 '''
