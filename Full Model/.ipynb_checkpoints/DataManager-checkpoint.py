@@ -49,19 +49,19 @@ class dataManager:
         X_train = np.transpose(X_train, (2, 1, 0))
         X_test = np.transpose(X_test, (2, 1, 0))
 
-        self.A_train, self.P_avg_train, indices = self.create_adjacency_matrix(X_train, n)
+        self.A_train, self.P_avg_train, indices, self.conv_avg_train = self.create_adjacency_matrix(X_train, n)
         self.train_indices = indices
         self.X_train = self.drop_samples(X_train, indices)
         self.Y_train = self.drop_samples(Y_train, indices)
         self.threshold = n
 
-        self.A_test, self.P_avg_test, indices = self.create_adjacency_matrix(X_test, n)
+        self.A_test, self.P_avg_test, indices, self.conv_avg_test = self.create_adjacency_matrix(X_test, n)
         self.test_indices = indices
         self.X_test = self.drop_samples(X_test, indices)
         self.Y_test = self.drop_samples(Y_test, indices)
         # create adjacency matrix again using reduced X_train and X_test
-        self.A_train, self.P_avg_train, indices = self.create_adjacency_matrix(self.X_train, n)
-        self.A_test, self.P_avg_test, indices = self.create_adjacency_matrix(self.X_test, n)
+        self.A_train, self.P_avg_train, indices, self.conv_avg_train = self.create_adjacency_matrix(self.X_train, n)
+        self.A_test, self.P_avg_test, indices, self.conv_avg_test = self.create_adjacency_matrix(self.X_test, n)
 
         self.mean = None
         self.sd = None
@@ -111,7 +111,7 @@ class dataManager:
         # print(M)
         P_avg = 1 / M * sum_train
         A = (P_avg > n)
-        return A, P_avg, remove_indices
+        return A, P_avg, remove_indices, np.mean(P, axis = 0)
 
     def drop_samples(self, X, remove_indices):
         '''
@@ -161,8 +161,8 @@ class dataManager:
         self.X_test = self.X_test[:,ind,:]
         
         # create adjacency matrix again using reduced X_train and X_test
-        self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, self.threshold)
-        self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, self.threshold)
+        self.A_train, self.P_avg_train, _, self.conv_avg_train = self.create_adjacency_matrix(self.X_train, self.threshold)
+        self.A_test, self.P_avg_test, _, self.conv_avg_test = self.create_adjacency_matrix(self.X_test, self.threshold)
 
         print("--------data successfully filtered (variance)--------")
     
@@ -175,8 +175,8 @@ class dataManager:
         self.X_test = self.X_test[:,ind,:]
         
         # create adjacency matrix again using reduced X_train and X_test
-        self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, self.threshold)
-        self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, self.threshold)
+        self.A_train, self.P_avg_train, _, self.conv_avg_train = self.create_adjacency_matrix(self.X_train, self.threshold)
+        self.A_test, self.P_avg_test, _, self.conv_avg_test = self.create_adjacency_matrix(self.X_test, self.threshold)
 
         print("--------data successfully filtered (dvariance)--------")
     
@@ -200,8 +200,8 @@ class dataManager:
         self.X_test = F.avg_pool1d(torch.from_numpy(self.X_test), size, stride, padding).detach().numpy()
         #self.Y_test = F.avg_pool1d(torch.from_numpy(self.Y_test), size, stride, padding).detach().numpy() > 0.5
         #self.Y_train = F.avg_pool1d(torch.from_numpy(self.Y_train), size, stride, padding).detach().numpy() > 0.5
-        self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, self.threshold)
-        self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, self.threshold)
+        self.A_train, self.P_avg_train, _, self.conv_avg_train = self.create_adjacency_matrix(self.X_train, self.threshold)
+        self.A_test, self.P_avg_test, _, self.conv_avg_test = self.create_adjacency_matrix(self.X_test, self.threshold)
         
 def extend_identity(n, extend_factor):
     '''

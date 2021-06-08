@@ -217,6 +217,20 @@ def auc(y_pred, y_true, threshold = 0.5):
 def auc2(y_pred, y_true, threshold = None):
     fpr, tpr, thresholds = metrics.roc_curve(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy(), pos_label=1)
     return metrics.auc(fpr, tpr)
+    
+
+import matplotlib.pyplot as plt
+
+def plot_AUC(y_pred, y_true):
+    fpr, tpr, threshold = metrics.roc_curve(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy(), pos_label=1)
+    plt.style.use('ggplot')
+    plt.figure(figsize=(10, 10))
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.plot(fpr, tpr, label='AUC = {:.3f}'.format(metrics.auc(fpr, tpr)))
+    plt.xlabel('False positive rate')
+    plt.ylabel('True positive rate')
+    plt.title('ROC curve')
+    plt.legend();
 
 def auc_nf(y_pred, y_true, threshold = None):
     return roc_auc_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
@@ -347,6 +361,25 @@ def eval_mlp(model, sim_test, dm, device_name ='cpu', threshold = 0.5, verbose =
     if verbose:
         print("threshold:", threshold," validation loss:",round(float(val_loss), 4),"F1 accuracy", round(float(F1_acc), 3), "Precision accuracy", round(float(p_acc), 3), "Recall accuracy", round(float(r_acc), 3), "AUC accuracy:", round(float(auc_acc), 3))
     return F1_acc
+
+def eval_plot_MLP(model, sim_test, dm, device_name ='cpu', verbose = True):
+    if device_name == 'cuda':
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        print("device set to cuda") if device == torch.device('cuda') else print("cuda is not available")
+    elif device_name == 'cpu':
+        device = torch.device('cpu')
+        print("device set to cpu")
+    else:
+        device = torch.device('cpu')
+        print("unknown device")    
+    X_test = torch.from_numpy(sim_test).float().to(device)
+    Y_test = torch.from_numpy(dm.Y_test).float().to(device)
+    criterion = nn.BCELoss()
+    model.eval()
+    val_pred = model(X_test)
+    val_loss = criterion(val_pred, Y_test)
+    plot_AUC(val_pred, Y_test)
+
 
 def save_ckp(state, f_path):
     torch.save(state, f_path)

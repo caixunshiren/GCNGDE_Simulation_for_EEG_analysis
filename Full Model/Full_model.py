@@ -102,7 +102,10 @@ class Integrated_Model():
         for i in range(5, 100, 5):
             t = i / 100
             MLP.eval_mlp(self.MLPmodelGCN, sim_all["GCN_test"], dm, device_name='cuda', threshold=t)
+        MLP.eval_plot_MLP(self.MLPmodelGCN, sim_all["GCN_test"], dm, device_name='cuda')
+        
         print("GDE accuracy:")
         for i in range(5, 100, 5):
             t = i / 100
             MLP.eval_mlp(self.MLPmodelGDE, sim_all["GDE_test"], dm, device_name='cuda', threshold=t)
+        MLP.eval_plot_MLP(self.MLPmodelGDE, sim_all["GDE_test"], dm, device_name='cuda')
