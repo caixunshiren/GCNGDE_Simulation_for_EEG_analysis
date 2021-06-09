@@ -29,7 +29,7 @@ def load_model(checkpoint, device_name ='cpu' ):
         print("unknown device")
     
     parameters = checkpoint['parameters']
-    model = Net(parameters['body'], parameters['n_layers'], F.relu, bias=True).to(device)
+    model = Net(parameters['body'], parameters['n_layers'], F.relu, bias=False).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=parameters['learning_rate'],
                                  weight_decay=parameters['weight_decay'])
     model.load_state_dict(checkpoint['state_dict'])
@@ -58,9 +58,8 @@ def train_GCN(A, X_train, X_test, checkpoint, device_name='cpu', load=False, pri
     valid_features = X_test.to(device)
 
     # initialize model
-    model = Net(parameters['body'], parameters['n_layers'], F.relu, bias=True).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=parameters['learning_rate'],
-                                 weight_decay=parameters['weight_decay'])
+    model = Net(parameters['body'], parameters['n_layers'], F.relu, bias=False).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=parameters['learning_rate'],weight_decay=parameters['weight_decay']) #torch.optim.SGD(model.parameters(), lr=parameters['learning_rate'], momentum=0.5)
     criterion = sim_loss()
 
     # load past checkpoint if any
@@ -129,7 +128,7 @@ def get_sim_matrix_from_model(dm, model_dir):
     input_test = X_test.to(device)
 
     # initialize model
-    model = Net(parameters['body'], parameters['n_layers'], F.relu, bias=True).to(device)
+    model = Net(parameters['body'], parameters['n_layers'], F.relu, bias=False).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=parameters['learning_rate'],
                                  weight_decay=parameters['weight_decay'])
 

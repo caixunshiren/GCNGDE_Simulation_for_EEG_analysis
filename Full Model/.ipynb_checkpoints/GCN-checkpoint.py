@@ -130,62 +130,87 @@ class sim_loss(torch.nn.Module):
 
 
 # --- CrossBar Implementation --- #
-class Batched_MMM(torch.autograd.Function):
+class GCN_operation(torch.autograd.Function):
     #Modified from Louis: Custom pytorch autograd function for crossbar VMM operation
     @staticmethod
-    def forward(ctx, ticket, x, W, b):
-        #x shape is m x n -> convert to nxm -> the convert back
-        x = torch.transpose(x,0,1)
-        ctx.save_for_backward(x, W, b)
-        print("debug BMMM: x is size", x.shape)
-        print("debug W:", W.shape)
-        print("debug b:", b.shape)
-        #print(x[:,0].size, x[:,0].size(1))
-        x_out = torch.zeros(W.shape[0], x.shape[1])
-        for i in tqdm(range(x.shape[1])):
-            #temp = ticket.vmm(torch.unsqueeze(x[:,i],1))
-            #print("debug temp:", temp.shape)
-            x_out[:,i] = torch.squeeze(ticket.vmm(torch.unsqueeze(x[:,i],1))) + b
+    def forward(ctx, ticket_A, ticket_W_T, A, W, Z):
+        #Z is batched M x N x D
+        ctx.save_for_backward(A, W, Z)
+        Z_out = torch.zeros(Z.shape[0], A.shape[0], W.shape[1])
+        for i in range(Z.shape[0]): # for each training example (M)
+            # for each example, do H_i = matmul(A,Z_i), then Z_out_i = matmul(H, W) --> Z_out_i = matmul(W.T, H.T).T
+            H_i = torch.zeros(A.shape[0], Z.shape[2])
+            for j in range(Z.shape[2]): # for each column of Z (D)
+                H_i[:,j] = torch.squeeze(ticket_A.vmm(torch.unsqueeze(Z[i,:,j],1)))
+            # H_i is NxD, W is DxD_out
+            Z_out_i_T = torch.zeros(Z_out.shape[2],Z_out.shape[1])
+            for k in range(H_i.shape[0]): # for N nodes
+                Z_out_i_T[:,k] = torch.squeeze(ticket_W_T.vmm(torch.unsqueeze(H_i[k,:],1)))
+            Z_out[i, :,:] = Z_out_i_T.T
         return torch.transpose(x_out,0,1)
         
     @staticmethod
-    def backward(ctx, dx):
+    def backward(ctx, dZ_out):
         #worry about this later
-        x, W, b = ctx.saved_tensors #x is nxm
-        grad_input = W.t().mm(dx)
-        grad_weight = dx.mm(x.t())
-        grad_bias = dx
-        return (None, grad_input, grad_weight, grad_bias)
+        A, W, Z = ctx.saved_tensors #x is nxm
+        dZ = torch.matmul(torch.matmul(A.T, dZ_out), W.T)
+        dW = torch.matmul(torch.matmul(torch.transpose(Z, 1,2), A.T), dZ_out)
+        return (None, None, None, dW, dZ)
 
-class Linear_block(nn.Module):
-    '''
-    Input: tensor with shape m x n x _
-    Weight: matrix of shape _ x n
-    Output: tensor with shape m x _ x _
-    
-    in_size: n
-    out_size: _
-    
-    '''
-    def __init__(self, in_size, out_size, cb_param, w = None, b = None):
-        super(Linear_block, self).__init__()
-        if w is not None and b is not None:
-            self.w = nn.Parameter(w)
-            self.b = nn.Parameter(b)
-            print("--- weight initialized successfually ---")
-        else:
-            stdv = 1. / in_size ** 1 / 2
-            self.w = nn.Parameter(torch.Tensor(out_size, in_size)).data.uniform_(-stdv, stdv)
-            self.b = nn.Parameter(torch.Tensor(out_size, 1)).data.uniform_(-stdv, stdv)
-        self.cb = crossbar(cb_param)
-        self.f = Batched_VMM()
-        #print("debug:",self.w.shape)
-        self.ticket = self.cb.register_linear(torch.transpose(self.w, 0,1))
+class GCN_wCB(nn.Module):
+    def __init__(self, in_features, out_features, A, cb_A, cb_W):
+        super(GCN, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.weight = nn.Parameter(torch.Tensor(in_features, out_features))
+        self.reset_parameters()
         
-    def forward(self, x):
-        return self.f.apply(self.ticket, x, self.w, self.b)
+        self.A = A
+        self.cb_A = cb_A
+        self.cb_W_T = cb_W
+        self.ticket_A = self.cb.register_linear(self.A) # no need to transpose since A is symmetric
+        self.ticket_W_T = self.cb.register_linear(self.weight)
+
+    def __repr__(self):
+        return self.__class__.__name__ + ' (' \
+               + str(self.in_features) + ',' \
+               + str(self.out_features) + ')'
+
+    def reset_parameters(self):
+        stdv = 1. / self.weight.size(1) ** 1 / 2
+        self.weight.data.uniform_(-stdv, stdv)
+
+    # H, feature matrix
+    # A, precomputed adj matrix
+    def forward(self, Z):
+        return GCN_operation.apply(self.ticket_A, self.ticket_W_T, self.A, self.weight, Z)
     
     def remap(self):
         #Should call the remap crossbar function after 1 or a couple update steps 
-        self.cb.clear()
-        self.ticket = self.cb.register_linear(torch.transpose(self.w, 0,1))
+        self.cb_W_T.clear()
+        self.ticket_W_T = self.cb.register_linear(self.weight)
+        
+class Net_wCB(nn.Module):
+    def __init__(self, body_features, n_layers, A, cb_A, cb_Ws, activation = F.relu):
+        super(Net, self).__init__()
+        assert(n_layers >= 1)
+        self.activation = activation
+        self.head = GCN_wCB(body_features, body_features, A, cb_A, cb_Ws[0])
+        self.layers = nn.ModuleList()
+        for i in range(n_layers - 1):
+            self.layers.append(GCN_wCB(body_features, body_features, A, cb_A, cb_Ws[i+1]))
+        self.tail = SimularityMatrix(body_features*2) # size(H_0 + h_u)
+
+    def forward(self, h_0):
+        #print(h_0.shape)
+        x = self.activation(self.head(h_0))
+        for layer in self.layers:
+            x = self.activation(layer(x))
+        sim_matrix = self.tail(x, h_0)
+        return sim_matrix
+    
+    def remap(self):
+        for layer in self.layers:
+            if layer.__name__ == "GCN_wCB":
+                layer.remap()
+                print("remap successfully")

@@ -25,7 +25,7 @@ class Integrated_Model():
         self.MLPGDEparams = MLPGDEparams
         self.GCNmodel, self.GCNcheckpoint = self.train_GCN(dm, Araw)
         self.GDEmodel, self.GDEcheckpoint = self.train_GDE(dm, Araw)
-        self.MLPmodelGCN, self.MLPmodelGDE, self.MLPcheckpointGCN, self.MLPcheckpointGDE = self.train_MLP(dm, Araw)
+        self.MLPmodelGCN, self.MLPmodelGDE, self.MLPcheckpointGCN, self.MLPcheckpointGDE = self.train_MLP(dm, Araw, device_name = 'cpu',acc_fn = MLP.auc2)
 
     def train_GCN(self, dm, Araw, device_name = 'cpu'):
         A = create_DAD(Araw)

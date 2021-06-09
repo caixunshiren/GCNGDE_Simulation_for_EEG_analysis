@@ -44,9 +44,9 @@ class Batched_VMM(torch.autograd.Function):
         #x shape is m x n -> convert to nxm -> the convert back
         x = torch.transpose(x,0,1)
         ctx.save_for_backward(x, W, b)
-        print("debug BVMM: x is size", x.shape)
-        print("debug W:", W.shape)
-        print("debug b:", b.shape)
+        #print("debug BVMM: x is size", x.shape)
+        #print("debug W:", W.shape)
+        #print("debug b:", b.shape)
         #print(x[:,0].size, x[:,0].size(1))
         x_out = torch.zeros(W.shape[0], x.shape[1])
         for i in tqdm(range(x.shape[1])):
@@ -57,12 +57,13 @@ class Batched_VMM(torch.autograd.Function):
         
     @staticmethod
     def backward(ctx, dx):
-        #worry about this later
+        #backprop
         x, W, b = ctx.saved_tensors #x is nxm
-        grad_input = W.t().mm(dx)
-        grad_weight = dx.mm(x.t())
-        grad_bias = dx
-        return (None, grad_input, grad_weight, grad_bias)
+        return  (None, 
+                torch.transpose(torch.transpose(dx, 0, 1).matmul(W), 0, 1), 
+                dx.matmul(torch.transpose(x,0,1)), 
+                torch.eye(b.numel())
+               )
 
 class Linear_block(nn.Module):
     def __init__(self, in_size, out_size, cb_param, w = None, b = None):
@@ -85,7 +86,6 @@ class Linear_block(nn.Module):
     
     def remap(self):
         #Should call the remap crossbar function after 1 or a couple update steps 
-        self.cb.clear()
         self.ticket = self.cb.register_linear(torch.transpose(self.w, 0,1))
 
 class MLPwCB(nn.Module):
@@ -128,6 +128,14 @@ class MLPwCB(nn.Module):
             print(x.shape)
         print(x.shape)
         return x
+    
+    def remap(self):
+        for layer in self.layers:
+            if layer.__name__ == "Linear_block":
+                layer.remap()
+                print("remap successfully")
+            
+        
     
 def MLPtoMLPwCB(srcmodel, cb_params):
     device = torch.device('cpu')
