@@ -234,3 +234,113 @@ class sim_loss(torch.nn.Module):
 
         obj_vector = (torch.sum(A_tf * sim_matrix, dim=2, keepdim=True) - abs_N * logexp_S)
         return -(1 / M) * torch.sum(obj_vector)
+    
+    
+    
+
+    
+#--------------------crossbar implementation-----------------------#
+class GCN_operation(torch.autograd.Function):
+    #Modified from Louis: Custom pytorch autograd function for crossbar VMM operation
+    @staticmethod
+    def forward(ctx, ticket_A, ticket_W_T, A, W, Z):
+        #Z is batched M x N x D
+        ctx.save_for_backward(A, W, Z)
+        Z_out = torch.zeros(Z.shape[0], A.shape[0], W.shape[1])
+        for i in range(Z.shape[0]): # for each training example (M)
+            # for each example, do H_i = matmul(A,Z_i), then Z_out_i = matmul(H, W) --> Z_out_i = matmul(W.T, H.T).T
+            H_i = torch.zeros(A.shape[0], Z.shape[2])
+            for j in range(Z.shape[2]): # for each column of Z (D)
+                H_i[:,j] = torch.squeeze(ticket_A.vmm(torch.unsqueeze(Z[i,:,j],1)))
+            # H_i is NxD, W is DxD_out
+            Z_out_i_T = torch.zeros(Z_out.shape[2],Z_out.shape[1])
+            for k in range(H_i.shape[0]): # for N nodes
+                Z_out_i_T[:,k] = torch.squeeze(ticket_W_T.vmm(torch.unsqueeze(H_i[k,:],1)))
+            Z_out[i, :,:] = Z_out_i_T.T
+        return torch.transpose(x_out,0,1)
+        
+    @staticmethod
+    def backward(ctx, dZ_out):
+        #worry about this later
+        A, W, Z = ctx.saved_tensors #x is nxm
+        dZ = torch.matmul(torch.matmul(A.T, dZ_out), W.T)
+        dW = torch.matmul(torch.matmul(torch.transpose(Z, 1,2), A.T), dZ_out)
+        return (None, None, None, dW, dZ)
+
+# GCN Block for body layers
+class Block_wCB(nn.Module):
+    def __init__(self, A, features, activation, num_layers, net_params, cb_A, cb_Ws):
+        super(Block, self).__init__()
+        self.features = features
+        self.activation = activation
+        self.num_layers = num_layers
+        
+        self.weights = net_params.view(self.num_layers, self.features, self.features)
+        self.A = A
+        self.cb_A = cb_A
+        self.cb_W_Ts = cb_Ws # list of cbs
+        self.ticket_A = self.cb_A.register_linear(self.A) # no need to transpose since A is symmetric
+        self.ticket_W_Ts = [cb.register_linear(self.weights[i,:,:]) for i, cb in enumerate(self.cb_W_Ts)]
+
+    def forward(self, x, t, net_params):
+        weights = net_params.view(self.num_layers, self.features, self.features)
+
+        x = x.view(-1, self.A.size(1), self.features)
+        for i in range(self.num_layers):
+            x = GCN_operation.apply(self.ticket_A, self.ticket_W_Ts[i], self.A, weights[i, :, :], x) #self.A.matmul(x).matmul()
+            x = self.activation(x)
+
+        return x
+
+    def num_params(self):
+        return self.features * self.features * self.num_layers
+    
+    def remap(self):
+        for i, cb in enumerate(self.cb_W_Ts):
+            cb.clear()
+            self.ticket_W_Ts[i] = cb.register_linear(self.weights[i,:,:])
+    
+class ODENet_wCB(nn.Module):
+    def __init__(self, solver, body_channels, hidden_layers, A, solver_params, cb_A, cb_Ws):
+        super(ODENet, self).__init__()
+
+        # Graph Laplacian
+        self.A = A
+
+        # Controls amount of parameters
+        self.body_channels = body_channels
+
+        # Head
+        # self.head = GCN(A, in_channels, body_channels)
+
+        # Body
+        self.int_f = solver
+        self.Integrate = Integrate
+        self.solver_params = solver_params
+        self.N = solver_params["N"]
+        self.h = (solver_params["t1"] - solver_params["t0"]) / solver_params["N"]
+        self.b_tableau = solver_params["b_tableau"]
+        self.t0 = torch.tensor(float(solver_params["t0"]), requires_grad=True)
+        self.t1 = torch.tensor(float(solver_params["t1"]), requires_grad=True)
+
+        self.net_params = torch.nn.parameter.Parameter(
+            torch.Tensor(body_channels * body_channels * hidden_layers).normal_(mean=0, std=0.1, generator=None), requires_grad=True)
+
+        # Tail
+        self.tail = SimularityMatrix(body_channels * 2)
+        
+        self.f = Block(A, body_channels, F.relu, hidden_layers, self.net_params, cb_A, cb_Ws)
+
+    def _apply(self, fn):
+        super(ODENet, self)._apply(fn)
+        self.t0 = fn(self.t0)
+        self.t1 = fn(self.t1)
+        return self
+
+    def forward(self, h_0):
+        x = self.Integrate.apply(self.int_f, self.f, h_0, self.t0, self.t1, self.N, self.net_params, self.b_tableau)  # Vanilla RK4
+        x = self.tail(x, h_0)
+        return x
+    
+    def remape(self):
+        self.f.remap()

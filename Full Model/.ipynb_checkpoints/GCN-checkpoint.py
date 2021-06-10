@@ -168,8 +168,8 @@ class GCN_wCB(nn.Module):
         self.A = A
         self.cb_A = cb_A
         self.cb_W_T = cb_W
-        self.ticket_A = self.cb.register_linear(self.A) # no need to transpose since A is symmetric
-        self.ticket_W_T = self.cb.register_linear(self.weight)
+        self.ticket_A = self.cb_A.register_linear(self.A) # no need to transpose since A is symmetric
+        self.ticket_W_T = self.cb_W_T.register_linear(self.weight)
 
     def __repr__(self):
         return self.__class__.__name__ + ' (' \
