@@ -153,7 +153,7 @@ class dataManager:
         
     #filter referencce: https://www.sciencedirect.com/science/article/abs/pii/S1388245711003774?via%3Dihub
     def apply_variance_filter(self, n):# n is the number of nodes to be kept
-        ind = np.argsort(get_label_variance(self.X_train, self.Y_train))#[::-1]
+        ind = np.argsort(get_label_variance(self.X_train, self.Y_train))[::-1]
         #print(ind)
         ind = ind[:n]
         ind = np.sort(ind)
@@ -167,7 +167,7 @@ class dataManager:
         print("--------data successfully filtered (variance)--------")
     
     def apply_dvariance_filter(self, n):
-        ind = np.argsort(np.absolute(get_label_variance(self.X_train, self.Y_train)-get_label_variance(self.X_train, self.Y_train, 0)))#[::-1]
+        ind = np.argsort(np.absolute(get_label_variance(self.X_train, self.Y_train)-get_label_variance(self.X_train, self.Y_train, 0)))[::-1]
         #print(ind)
         ind = ind[:n]
         ind = np.sort(ind)

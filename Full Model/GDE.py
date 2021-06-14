@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd.functional import vjp
 import time
+from crossbar import crossbar, ticket
 from GDEsolvers import *
 
 # GCN Block for body layers
@@ -241,36 +242,36 @@ class sim_loss(torch.nn.Module):
     
 #--------------------crossbar implementation-----------------------#
 class GCN_operation(torch.autograd.Function):
-    #Modified from Louis: Custom pytorch autograd function for crossbar VMM operation
+    # Modified from Louis: Custom pytorch autograd function for crossbar VMM operation
     @staticmethod
     def forward(ctx, ticket_A, ticket_W_T, A, W, Z):
-        #Z is batched M x N x D
+        # Z is batched M x N x D
         ctx.save_for_backward(A, W, Z)
         Z_out = torch.zeros(Z.shape[0], A.shape[0], W.shape[1])
-        for i in range(Z.shape[0]): # for each training example (M)
+        for i in range(Z.shape[0]):  # for each training example (M)
             # for each example, do H_i = matmul(A,Z_i), then Z_out_i = matmul(H, W) --> Z_out_i = matmul(W.T, H.T).T
             H_i = torch.zeros(A.shape[0], Z.shape[2])
-            for j in range(Z.shape[2]): # for each column of Z (D)
-                H_i[:,j] = torch.squeeze(ticket_A.vmm(torch.unsqueeze(Z[i,:,j],1)))
+            for j in range(Z.shape[2]):  # for each column of Z (D)
+                H_i[:, j] = torch.squeeze(ticket_A.vmm(torch.unsqueeze(Z[i, :, j], 1)))
             # H_i is NxD, W is DxD_out
-            Z_out_i_T = torch.zeros(Z_out.shape[2],Z_out.shape[1])
-            for k in range(H_i.shape[0]): # for N nodes
-                Z_out_i_T[:,k] = torch.squeeze(ticket_W_T.vmm(torch.unsqueeze(H_i[k,:],1)))
-            Z_out[i, :,:] = Z_out_i_T.T
-        return torch.transpose(x_out,0,1)
-        
+            Z_out_i_T = torch.zeros(Z_out.shape[2], Z_out.shape[1])
+            for k in range(H_i.shape[0]):  # for N nodes
+                Z_out_i_T[:, k] = torch.squeeze(ticket_W_T.vmm(torch.unsqueeze(H_i[k, :], 1)))
+            Z_out[i, :, :] = Z_out_i_T.T
+        return Z_out
+
     @staticmethod
     def backward(ctx, dZ_out):
-        #worry about this later
-        A, W, Z = ctx.saved_tensors #x is nxm
+        # worry about this later
+        A, W, Z = ctx.saved_tensors  # x is nxm
         dZ = torch.matmul(torch.matmul(A.T, dZ_out), W.T)
-        dW = torch.matmul(torch.matmul(torch.transpose(Z, 1,2), A.T), dZ_out)
+        dW = torch.matmul(torch.matmul(torch.transpose(Z, 1, 2), A.T), dZ_out)
         return (None, None, None, dW, dZ)
 
 # GCN Block for body layers
 class Block_wCB(nn.Module):
     def __init__(self, A, features, activation, num_layers, net_params, cb_A, cb_Ws):
-        super(Block, self).__init__()
+        super(Block_wCB, self).__init__()
         self.features = features
         self.activation = activation
         self.num_layers = num_layers
@@ -299,10 +300,11 @@ class Block_wCB(nn.Module):
         for i, cb in enumerate(self.cb_W_Ts):
             cb.clear()
             self.ticket_W_Ts[i] = cb.register_linear(self.weights[i,:,:])
+        print("remap successfully")
     
 class ODENet_wCB(nn.Module):
     def __init__(self, solver, body_channels, hidden_layers, A, solver_params, cb_A, cb_Ws):
-        super(ODENet, self).__init__()
+        super(ODENet_wCB, self).__init__()
 
         # Graph Laplacian
         self.A = A
@@ -329,10 +331,10 @@ class ODENet_wCB(nn.Module):
         # Tail
         self.tail = SimularityMatrix(body_channels * 2)
         
-        self.f = Block(A, body_channels, F.relu, hidden_layers, self.net_params, cb_A, cb_Ws)
+        self.f = Block_wCB(A, body_channels, F.relu, hidden_layers, self.net_params, cb_A, cb_Ws)
 
     def _apply(self, fn):
-        super(ODENet, self)._apply(fn)
+        super(ODENet_wCB, self)._apply(fn)
         self.t0 = fn(self.t0)
         self.t1 = fn(self.t1)
         return self
@@ -342,5 +344,5 @@ class ODENet_wCB(nn.Module):
         x = self.tail(x, h_0)
         return x
     
-    def remape(self):
+    def remap(self):
         self.f.remap()

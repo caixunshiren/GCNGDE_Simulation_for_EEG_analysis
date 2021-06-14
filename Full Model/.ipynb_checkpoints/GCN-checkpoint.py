@@ -3,6 +3,7 @@ import torch.autograd
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from crossbar import crossbar, ticket
 
 
 class GCN(nn.Module):
@@ -61,7 +62,6 @@ class SimularityMatrix(nn.Module):
     # computes the simularity matrix:
     # H, feature matrix --> N x D
     # A, precomputed adj matrix --> NxN
-    # this method is pretty wack, need to find a vectorized way to do it.
     def forward(self, H, H0):
         # get hidden state (concate H0 and H)
         Z = torch.cat((H0, H), 2)

@@ -120,13 +120,13 @@ class MLPwCB(nn.Module):
         return sim_matrices[:, tri_indices[0, :], tri_indices[1, :]]
 
     def forward(self, sim_matrices):
-        print("debug MLPwCB: sim_matrices size is", sim_matrices.shape)
+        #print("debug MLPwCB: sim_matrices size is", sim_matrices.shape)
         x = self.flatten(sim_matrices)
-        print("debug MLPwCB: x size is", x.shape)
+        #print("debug MLPwCB: x size is", x.shape)
         for layer in self.layers:
             x = layer(x)
-            print(x.shape)
-        print(x.shape)
+            #print(x.shape)
+        #print(x.shape)
         return x
     
     def remap(self):
@@ -146,7 +146,7 @@ def MLPtoMLPwCB(srcmodel, cb_params):
             weights.append({"w": srcmodel.state_dict()[param_tensor]})
         else:
             weights[-1]["b"] = srcmodel.state_dict()[param_tensor]
-    model = MLP.MLPwCB(srcmodel.matrix_dim, cb_params, srcmodel.n_layers, srcmodel.layer_size_factor,
+    model = MLPwCB(srcmodel.matrix_dim, cb_params, srcmodel.n_layers, srcmodel.layer_size_factor,
                    srcmodel.dropout, weights).to(device)
     return model
 # --- --- --- --- --- --- --- --- --- --- #

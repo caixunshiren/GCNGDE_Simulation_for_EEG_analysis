@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd.functional import vjp
 import time
+from crossbar import crossbar, ticket
 from GDEsolvers import *
 
 # GCN Block for body layers

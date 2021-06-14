@@ -3,6 +3,7 @@ import torch.autograd
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from crossbar import crossbar, ticket
 
 
 class GCN(nn.Module):
@@ -61,7 +62,6 @@ class SimularityMatrix(nn.Module):
     # computes the simularity matrix:
     # H, feature matrix --> N x D
     # A, precomputed adj matrix --> NxN
-    # this method is pretty wack, need to find a vectorized way to do it.
     def forward(self, H, H0):
         # get hidden state (concate H0 and H)
         Z = torch.cat((H0, H), 2)
@@ -147,7 +147,7 @@ class GCN_operation(torch.autograd.Function):
             for k in range(H_i.shape[0]): # for N nodes
                 Z_out_i_T[:,k] = torch.squeeze(ticket_W_T.vmm(torch.unsqueeze(H_i[k,:],1)))
             Z_out[i, :,:] = Z_out_i_T.T
-        return torch.transpose(x_out,0,1)
+        return Z_out
         
     @staticmethod
     def backward(ctx, dZ_out):
@@ -159,12 +159,17 @@ class GCN_operation(torch.autograd.Function):
 
 class GCN_wCB(nn.Module):
     def __init__(self, in_features, out_features, A, cb_A, cb_W):
-        super(GCN, self).__init__()
+        super(GCN_wCB, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.weight = nn.Parameter(torch.Tensor(in_features, out_features))
         self.reset_parameters()
-        
+
+        #clear the crossbars
+        cb_A.clear()
+        cb_W.clear()
+
+
         self.A = A
         self.cb_A = cb_A
         self.cb_W_T = cb_W
@@ -188,11 +193,11 @@ class GCN_wCB(nn.Module):
     def remap(self):
         #Should call the remap crossbar function after 1 or a couple update steps 
         self.cb_W_T.clear()
-        self.ticket_W_T = self.cb.register_linear(self.weight)
-        
+        self.ticket_W_T = self.cb_W_T.register_linear(self.weight)
+
 class Net_wCB(nn.Module):
     def __init__(self, body_features, n_layers, A, cb_A, cb_Ws, activation = F.relu):
-        super(Net, self).__init__()
+        super(Net_wCB, self).__init__()
         assert(n_layers >= 1)
         self.activation = activation
         self.head = GCN_wCB(body_features, body_features, A, cb_A, cb_Ws[0])
@@ -211,6 +216,6 @@ class Net_wCB(nn.Module):
     
     def remap(self):
         for layer in self.layers:
-            if layer.__name__ == "GCN_wCB":
+            if isinstance(layer, GCN_wCB):
                 layer.remap()
                 print("remap successfully")
