@@ -41,9 +41,8 @@ class Batched_VMM(torch.autograd.Function):
     #Modified from Louis: Custom pytorch autograd function for crossbar VMM operation
     @staticmethod
     def forward(ctx, ticket, x, W, b):
-        #x shape is m x n -> convert to nxm -> the convert back
-        x = torch.transpose(x,0,1)
         ctx.save_for_backward(x, W, b)
+        #x shape is nxm
         #print("debug BVMM: x is size", x.shape)
         #print("debug W:", W.shape)
         #print("debug b:", b.shape)
@@ -53,17 +52,16 @@ class Batched_VMM(torch.autograd.Function):
             #temp = ticket.vmm(torch.unsqueeze(x[:,i],1))
             #print("debug temp:", temp.shape)
             x_out[:,i] = torch.squeeze(ticket.vmm(torch.unsqueeze(x[:,i],1))) + b
-        return torch.transpose(x_out,0,1)
+        return x_out
         
     @staticmethod
     def backward(ctx, dx):
         #backprop
-        x, W, b = ctx.saved_tensors #x is nxm
-        return  (None, 
-                torch.transpose(torch.transpose(dx, 0, 1).matmul(W), 0, 1), 
-                dx.matmul(torch.transpose(x,0,1)), 
-                torch.eye(b.numel())
-               )
+        x, W, b = ctx.saved_tensors #x is mxn
+        t = torch.transpose(torch.transpose(dx, 0, 1).matmul(W), 0, 1)
+
+        return None, t, -dx.matmul(torch.transpose(x,0,1)), torch.eye(b.numel())
+
 
 class Linear_block(nn.Module):
     def __init__(self, in_size, out_size, cb_param, w = None, b = None):
@@ -82,14 +80,16 @@ class Linear_block(nn.Module):
         self.ticket = self.cb.register_linear(torch.transpose(self.w, 0,1))
         
     def forward(self, x):
-        return self.f.apply(self.ticket, x, self.w, self.b)
+        x = torch.transpose(x, 0, 1)
+        x = self.f.apply(self.ticket, x, self.w, self.b)
+        return torch.transpose(x, 0, 1)
     
     def remap(self):
         #Should call the remap crossbar function after 1 or a couple update steps 
         self.ticket = self.cb.register_linear(torch.transpose(self.w, 0,1))
 
 class MLPwCB(nn.Module):
-    def __init__(self, matrix_dim, cb_params, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5], weights=None,):
+    def __init__(self, matrix_dim, cb_params, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5], weights=None):
         super(MLPwCB, self).__init__()
         feature_len = torch.triu_indices(matrix_dim, matrix_dim).shape[1]
         self.layers = nn.ModuleList()
@@ -136,10 +136,11 @@ class MLPwCB(nn.Module):
                 print("remap successfully")
             
         
-    
+import copy
 def MLPtoMLPwCB(srcmodel, cb_params):
     device = torch.device('cpu')
     weights = []
+    srcmodel = copy.deepcopy(srcmodel)
     for i, param_tensor in enumerate(srcmodel.state_dict()):
         print(i, param_tensor, srcmodel.state_dict()[param_tensor].shape)
         if i%2 == 0:

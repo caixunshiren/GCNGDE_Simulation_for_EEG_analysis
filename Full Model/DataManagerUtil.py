@@ -100,3 +100,27 @@ def visualize_avg_sim_matrix(dm, sim_train, sim_test):
     show_heat_map(ictal_sum)
     print("Average Non-Ictal")
     show_heat_map(normal_sum)
+
+def visualize_sample_sim_matrix(dm, sim_train, sim_test):
+    perm = np.random.permutation(sim_train.shape[0])
+    train = sim_train#sim_train[perm, :, :]
+    label = dm.Y_train#dm.Y_train[perm,:]
+
+    sample_non_ictal = None
+    sample_ictal = None
+
+    for i in range(sim_train.shape[0]):
+            if label[i,0] == 1 and sample_ictal is None:
+                sample_ictal = train[i,:,:]
+
+            elif label[i,0] == 0 and sample_non_ictal is None:
+                sample_non_ictal = train[i,:,:]
+
+            elif sample_ictal is not None and sample_non_ictal is not None:
+                break
+
+
+    print("sample ictal")
+    show_heat_map(sample_ictal)
+    print("sample Non-Ictal")
+    show_heat_map(sample_non_ictal)
