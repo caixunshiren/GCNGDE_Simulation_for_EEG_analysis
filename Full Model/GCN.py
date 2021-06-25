@@ -185,6 +185,7 @@ class sim_loss(torch.nn.Module):
         obj_vector = (torch.sum(A_tf * sim_matrix, dim=2, keepdim=True) - abs_N * logexp_S)
         return -(1 / M) * torch.sum(obj_vector)
 
+    
 
 # --- CrossBar Implementation --- #
 class GCN_operation(torch.autograd.Function):
