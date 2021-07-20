@@ -6,6 +6,7 @@ import GDE as GDE
 import GDEutil as GDEutil
 import GDEsolvers as GDEsolvers
 import MLP as MLP
+import RNN as RNN
 
 #Standard Libraries
 # Torch
@@ -162,6 +163,119 @@ class Integrated_Model():
         sim_test = model.forward_approximate(torch.from_numpy(X_test).float(),
                                         torch.from_numpy(A).float(), tensor).cpu().detach().numpy()
         return sim_train, sim_test
-        
-        
-        
+
+
+class Integrated_Model_RNN():
+
+    def __init__(self, GCNparams, GDEparams, RNNGCNparams, RNNGDEparams, dm, Araw):
+        self.GCNparams = GCNparams
+        self.GDEparams = GDEparams
+        self.RNNGCNparams = RNNGCNparams
+        self.RNNGDEparams = RNNGDEparams
+        self.GCNmodel, self.GCNcheckpoint = self.train_GCN(dm, Araw)
+        self.GDEmodel, self.GDEcheckpoint = self.train_GDE(dm, Araw)
+        self.RNNmodelGCN, self.RNNmodelGDE, self.RNNcheckpointGCN, self.RNNcheckpointGDE = self.train_RNN(dm, Araw,
+                                                                                                          device_name='cpu',
+                                                                                                          acc_fn=MLP.auc2,
+                                                                                                          plot_avg_matrix=False,
+                                                                                                          plot_sample_matrix=False)
+
+    def train_GCN(self, dm, Araw, device_name='cpu'):
+        A = create_DAD(Araw)
+        X_train = dm.X_train
+        X_test = dm.X_test
+        # print(X_train.shape, X_test.shape, A.shape)
+        GCNcheckpoint = {'parameters': self.GCNparams}
+        print("----------Training GCN-----------")
+        GCNmodel, GCNcheckpoint = GCNutil.train_GCN(A, X_train, X_test, GCNcheckpoint, device_name=device_name,
+                                                    load=False, print_summary=False)
+        print("----------Training Ends-----------")
+        return GCNmodel, GCNcheckpoint
+
+    def train_GDE(self, dm, Araw, device_name='cpu'):
+        A = create_DAD(Araw)
+        X_train = dm.X_train
+        X_test = dm.X_test
+        GDEcheckpoint = {'parameters': self.GDEparams}
+        print("----------Training GDE-----------")
+        GDEmodel, GDEcheckpoint = GDEutil.train_GDE(A, X_train, X_test, GDEcheckpoint, device_name=device_name,
+                                                    load=False, print_summary=False)
+        print("----------Training Ends-----------")
+        return GDEmodel, GDEcheckpoint
+
+    def train_RNN(self, dm, Araw, device_name='cpu', acc_fn=MLP.F1, plot_avg_matrix=False, plot_sample_matrix=False):
+        sim_all = {}
+        A = create_DAD(Araw)
+        X_train = dm.X_train
+        X_test = dm.X_test
+        GCNmodel = self.GCNmodel
+        GDEmodel = self.GDEmodel
+
+        # Get simularity matrix from GCN
+        GCNmodel.eval()
+
+        sim_all["GCN_train"] = GCNmodel(torch.from_numpy(X_train).float().to(device_name),
+                                        torch.from_numpy(A).float().to(device_name)).cpu().detach().numpy()
+        sim_all["GCN_test"] = GCNmodel(torch.from_numpy(X_test).float().to(device_name),
+                                       torch.from_numpy(A).float().to(device_name)).cpu().detach().numpy()
+        '''
+        sim_all["GCN_train"], sim_all["GCN_test"]= self.approximate_covariance(dm, GCNmodel, Araw)
+        '''
+
+        # Get simularity matrix from GNODE
+        GDEmodel.eval()
+        sim_all["GDE_train"] = GDEmodel(torch.from_numpy(X_train).float().to(device_name)).cpu().detach().numpy()
+        sim_all["GDE_test"] = GDEmodel(torch.from_numpy(X_test).float().to(device_name)).cpu().detach().numpy()
+
+        if plot_avg_matrix:
+            print("Average Ictal and Non-Ictal Simularity Matrix for GCN")
+            visualize_avg_sim_matrix(dm, sim_all["GCN_train"], sim_all["GCN_test"])
+            print("Average Ictal and Non-Ictal Simularity Matrix for GDE")
+            visualize_avg_sim_matrix(dm, sim_all["GDE_train"], sim_all["GDE_test"])
+
+        if plot_sample_matrix:
+            print("Sample Ictal and Non-Ictal Simularity Matrix for GCN")
+            visualize_sample_sim_matrix(dm, sim_all["GCN_train"], sim_all["GCN_test"])
+            print("Sample Ictal and Non-Ictal Simularity Matrix for GDE")
+            visualize_sample_sim_matrix(dm, sim_all["GDE_train"], sim_all["GDE_test"])
+
+        print("----------Training RNN-----------")
+        #train_RNN(dm, sim_train, sim_test, parameters, acc_fn= F1, autostop_decay=0.995, print_summary=True, verbose=True)
+        RNNmodelGCN, _, _, RNNcheckpointGCN = RNN.train_RNN(dm, sim_all["GCN_train"], sim_all["GCN_test"],
+                                                            self.RNNGCNparams, acc_fn=acc_fn, autostop_decay=0.995,
+                                                            print_summary=False, verbose=False)
+        print("----------------------------------")
+        RNNmodelGDE, _, _, RNNcheckpointGDE = RNN.train_RNN(dm, sim_all["GDE_train"], sim_all["GDE_test"],
+                                                            self.RNNGDEparams, acc_fn=acc_fn, autostop_decay=0.995,
+                                                            print_summary=False, verbose=False)
+        print("----------Training Ends-----------")
+
+        return RNNmodelGCN, RNNmodelGDE, RNNcheckpointGCN, RNNcheckpointGDE
+
+    def print_accuracy(self, dm, Araw, device_name='cpu'):
+        sim_all = {}
+        A = create_DAD(Araw)
+        X_test = dm.X_test
+        GCNmodel = self.GCNmodel
+        GDEmodel = self.GDEmodel
+
+        # Get simularity matrix from GCN
+        GCNmodel.eval()
+        sim_all["GCN_test"] = GCNmodel(torch.from_numpy(X_test).float().to(device_name),
+                                       torch.from_numpy(A).float().to(device_name)).cpu().detach().numpy()
+
+        # Get simularity matrix from GNODE
+        GDEmodel.eval()
+        sim_all["GDE_test"] = GDEmodel(torch.from_numpy(X_test).float().to(device_name)).cpu().detach().numpy()
+
+        print("GCN accuracy:")
+        for i in range(5, 100, 5):
+            t = i / 100
+            RNN.eval_RNN(self.RNNmodelGCN, sim_all["GCN_test"], dm, device_name='cuda', threshold=t)
+        RNN.eval_plot_RNN(self.RNNmodelGCN, sim_all["GCN_test"], dm, device_name='cuda')
+
+        print("GDE accuracy:")
+        for i in range(5, 100, 5):
+            t = i / 100
+            RNN.eval_RNN(self.RNNmodelGDE, sim_all["GDE_test"], dm, device_name='cuda', threshold=t)
+        RNN.eval_plot_RNN(self.RNNmodelGDE, sim_all["GDE_test"], dm, device_name='cuda')
