@@ -243,11 +243,11 @@ class Integrated_Model_RNN():
         #train_RNN(dm, sim_train, sim_test, parameters, acc_fn= F1, autostop_decay=0.995, print_summary=True, verbose=True)
         RNNmodelGCN, _, _, RNNcheckpointGCN = RNN.train_RNN(dm, sim_all["GCN_train"], sim_all["GCN_test"],
                                                             self.RNNGCNparams, acc_fn=acc_fn, autostop_decay=0.995,
-                                                            print_summary=False, verbose=False)
+                                                            print_summary=False, verbose=True)
         print("----------------------------------")
         RNNmodelGDE, _, _, RNNcheckpointGDE = RNN.train_RNN(dm, sim_all["GDE_train"], sim_all["GDE_test"],
                                                             self.RNNGDEparams, acc_fn=acc_fn, autostop_decay=0.995,
-                                                            print_summary=False, verbose=False)
+                                                            print_summary=False, verbose=True)
         print("----------Training Ends-----------")
 
         return RNNmodelGCN, RNNmodelGDE, RNNcheckpointGCN, RNNcheckpointGDE

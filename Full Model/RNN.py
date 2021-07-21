@@ -205,7 +205,7 @@ def train_RNN(dm, sim_train, sim_test, parameters, acc_fn= F1, autostop_decay=0.
             v = beta * v + (1 - beta) * epoch_val_loss
 
         if verbose:
-            print("Epoch:", epoch, "  Train loss:", round(train_loss , 4), "  Train accuracy:", round(train_acc , 3),
+            print("Epoch:", epoch, "  Train loss:", round(float(train_loss) , 4), "  Train accuracy:", round(float(train_acc) , 3),
                   "  Val loss:", round(v_l, 4), "  Val accuracy:", round(v_a, 3), "   weighted Val loss:",
                   round(v, 4))
         if v_a > max_v_a:
@@ -219,7 +219,7 @@ def train_RNN(dm, sim_train, sim_test, parameters, acc_fn= F1, autostop_decay=0.
                 'optimizer': optimizer.state_dict()
             }
             print(round(max_v_a, 3), "----------saved-----------")
-        if epoch_val_loss > v and epoch > 60:
+        if epoch > n_epochs:
             break
 
     return bestmodel, max_v_a, epoch, checkpoint
