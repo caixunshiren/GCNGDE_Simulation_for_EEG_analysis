@@ -6,8 +6,8 @@ from DataManager import *
 
 
 #shows heatmap a 2D matrix
-def show_heat_map(m):
-    plt.imshow(m, cmap='bwr', interpolation='nearest')
+def show_heat_map(m, cmap = 'bwr'):
+    plt.imshow(m, cmap=cmap, interpolation='nearest')
     plt.colorbar()
     plt.show()
 
