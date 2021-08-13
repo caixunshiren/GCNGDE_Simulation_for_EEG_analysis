@@ -136,11 +136,20 @@ class dataManager:
         '''
         normalize X_train and X_test
         '''
+        '''
         sample_mean = np.mean(self.X_train, axis=0, keepdims=True)
         self.mean = np.mean(sample_mean, axis=2, keepdims=True)
         self.sd = np.std(sample_mean, axis=2, keepdims=True)
         self.X_train = (self.X_train - self.mean) / self.sd
         self.X_test = (self.X_test - self.mean) / self.sd
+        '''
+        max = 1
+        min = -1
+        X = self.X_train
+        X_std_train = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+        self.X_train = X_std_train * (max - min) + min
+        X_std_test = (self.X_test - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+        self.X_test = X_std_test * (max - min) + min
 
     def de_normalize(self):
         '''

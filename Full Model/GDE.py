@@ -51,8 +51,8 @@ class Integrate(torch.autograd.Function):
         return Integrate(copy.deepcopy(memo))
 
     @staticmethod
-    def forward(ctx, Integrator, f, x0, t0, t1, N, net_params, b_tableau):
-        solution = Integrator(b_tableau, lambda x, t: f(x, t, net_params), x0, t0, t1, N)
+    def forward(ctx, Integrator, f, x0, t0, t1, N, net_params, b_tableau, embeddings = None):
+        solution = Integrator(b_tableau, lambda x, t: f(x, t, net_params), x0, t0, t1, N, embeddings)
 
         # Save for jacobian calculations in backward()
         ctx.save_for_backward(x0, t0, t1, net_params)
@@ -219,6 +219,12 @@ class ODENet(nn.Module):
         x = self.Integrate.apply(self.int_f, self.f, h_0, self.t0, self.t1, self.N, self.net_params, self.b_tableau)  # Vanilla RK4
         x = self.tail(x, h_0)
         return x
+
+    def embedding_forward(self, h_0, A):
+        embeddings = []
+        x = self.Integrate.apply(verbose_solver, self.f, h_0, self.t0, self.t1, self.N, self.net_params, self.b_tableau, embeddings)  # Vanilla RK4
+        x = self.tail(x, h_0)
+        return x, embeddings
 
 #Loss Function
 class sim_loss(torch.nn.Module):

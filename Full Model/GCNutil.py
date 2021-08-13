@@ -146,9 +146,7 @@ def get_sim_matrix_from_model(dm, model_dir):
     return sim1.cpu().detach().numpy(), sim2.cpu().detach().numpy()
 
 # get pretrained sim matrix
-def load_flattened_sim_matrix(DIR, dm):
-    sim_train = np.load(DIR)
-    sim_test = np.load(DIR)
+def load_flattened_sim_matrix(sim_train, sim_test, dm):
 
     sim_train = np.delete(sim_train, np.s_[dm.train_indices], axis=0)
     sim_test = np.delete(sim_test, np.s_[dm.test_indices], axis=0)

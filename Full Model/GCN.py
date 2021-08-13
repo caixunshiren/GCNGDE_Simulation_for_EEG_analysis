@@ -156,6 +156,17 @@ class Net(nn.Module):
         sim_matrix = self.tail(x, h_0)
         return sim_matrix
 
+    def embedding_forward(self, h_0, A):
+        embeddings = []
+        embeddings.append(h_0)
+        x = self.activation(self.head(h_0, A))
+        embeddings.append(x)
+        for layer in self.layers:
+            x = self.activation(layer(x, A))
+            embeddings.append(x)
+        sim_matrix = self.tail(x, h_0)
+        return sim_matrix, embeddings
+
     def forward_approximate(self, h_0, A, tensor):
         # print(h_0.shape)
         x = self.activation(self.head(h_0, A))
