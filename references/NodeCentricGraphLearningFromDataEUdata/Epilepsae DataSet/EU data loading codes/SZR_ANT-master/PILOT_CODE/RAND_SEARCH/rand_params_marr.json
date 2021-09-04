@@ -1,5 +1,0 @@
-{"model_type": "svm",
-"model_name": "rand_srch_svm", 
-"C": [0.0001, 0.1, 4],
-"ictal_wind": "max",
-"use_ftrs": ["PWR","PWR_3SEC","PWRSTD_3SEC","PWR_9SEC","VLTG","VLTG_3SEC","VLTGSTD_3SEC"]}

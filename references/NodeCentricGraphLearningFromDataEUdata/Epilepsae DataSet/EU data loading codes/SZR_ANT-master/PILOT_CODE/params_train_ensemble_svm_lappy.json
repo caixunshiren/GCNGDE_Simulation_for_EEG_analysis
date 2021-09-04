@@ -1,6 +1,0 @@
-{"model_type": "svm",
-"model_name": "wtd_ptnts_mag_ifreq_svm", 
-"C": "5.12E+02",
-"gamma": "7.23E-06",
-"ictal_wind": "small",
-"use_ftrs": ["MAG","MAG_LAG2","MAG_LAG4","MAG_LAG6","MAG_LAG8","IFREQ_LAG2","IFREQ_LAG4","IFREQ_LAG6","IFREQ_LAG8"]}

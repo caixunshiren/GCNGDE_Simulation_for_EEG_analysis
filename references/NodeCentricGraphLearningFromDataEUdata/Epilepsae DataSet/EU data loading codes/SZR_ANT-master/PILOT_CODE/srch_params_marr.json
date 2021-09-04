@@ -1,5 +1,0 @@
-{"model_type": "logreg",
-"model_name": "var_sbox_srch3", 
-"C": [0.0001, 0.1, 4],
-"ictal_wind": "max",
-"use_ftrs": ["PWR","PWR_3SEC","PWRSTD_3SEC","PWR_9SEC","VLTG","VLTG_3SEC","VLTGSTD_3SEC"]}

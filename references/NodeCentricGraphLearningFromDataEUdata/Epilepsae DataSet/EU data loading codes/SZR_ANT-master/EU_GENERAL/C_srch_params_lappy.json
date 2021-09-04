@@ -1,9 +1,0 @@
-{"model_type": "svm",
-"model_name": "seSvmDsamp500",
-"gam": -7.5,
-"C": 10,
-"patience": 1,
-"equal_sub_wts": "True",
-"data_dir": "KDOWNSAMP_SE_UNBOUNDED_500", 
-"use_ftrs": ["SE"]}
-

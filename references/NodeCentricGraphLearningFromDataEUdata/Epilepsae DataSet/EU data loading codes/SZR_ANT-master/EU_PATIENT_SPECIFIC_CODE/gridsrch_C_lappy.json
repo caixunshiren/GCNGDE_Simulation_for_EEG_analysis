@@ -1,5 +1,0 @@
-{"model_type": "svm",
-"model_name_stem": "svm_grid_srch1", 
-"sub": "1096",
-"gamma": "1e-6",
-"use_ftrs": ["EU_MAG_LAG0","EU_MAG_LAG2","EU_MAG_LAG4","EU_MAG_LAG6","EU_MAG_LAG8"]}

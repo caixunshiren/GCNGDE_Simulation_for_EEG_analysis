@@ -1,7 +1,0 @@
-{"model_type": "logreg",
-"model_name": "tempLogregFinale",
-"equal_sub_wts": "True",
-"gamma": 0.000013,
-"C": 1,
-"use_ftrs": ["SE"]}
-

@@ -1,5 +1,0 @@
-{"model_type": "logreg",
-"model_name": "temp", 
-"C": "10e42",
-"ictal_wind": "max",
-"use_ftrs": ["PWR","PWR_3SEC","PWRSTD_3SEC","PWR_9SEC","VLTG","VLTGSTD_3SEC","COH"]}

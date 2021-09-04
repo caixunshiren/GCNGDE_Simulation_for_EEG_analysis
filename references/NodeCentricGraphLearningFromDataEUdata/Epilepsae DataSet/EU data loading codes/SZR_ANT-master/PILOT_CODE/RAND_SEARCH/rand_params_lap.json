@@ -1,6 +1,0 @@
-{"model_type": "logreg",
-"model_name": "rand_srch_svm",
-"n_rand_params": 3,
-"patience": 2,
-"ictal_wind": "max",
-"use_ftrs": ["PWR","PWR_3SEC","PWRSTD_3SEC","PWR_9SEC","VLTG","VLTG_3SEC","VLTGSTD_3SEC"]}

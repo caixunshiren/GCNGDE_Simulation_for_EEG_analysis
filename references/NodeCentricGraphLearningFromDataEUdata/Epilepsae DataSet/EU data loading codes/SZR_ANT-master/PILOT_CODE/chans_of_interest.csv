@@ -1,8 +1,0 @@
-SUB, ONSET, CONTROL
-NA, RHD1-2, LHD1-2
-TF, RHD1-2, LHD1-2
-CC, LHD1-2, ??
-CT, LHD1-2, ??
-ME, RFP1-2, ??
-CJ, LHD2-3, ??
-CO, LHD1-2, ??
