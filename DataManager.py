@@ -4,20 +4,9 @@ import torch.nn.functional as F
 import torch
 
 '''
-import torch
-import torch.autograd
-import torch.nn as nn
-import torch.nn.functional as F
+The datamanager class stores and  all iEEG signal data (train set and test set) used in the models. 
+Dimension of the tensors are shown below
 
-from scipy.linalg import fractional_matrix_power
-
-import os, sys, inspect
-cd = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-pd = os.path.dirname(cd)
-sys.path.insert(1, pd + r'Unsupervised GCN')
-from GCN import *
-'''
-'''
 D = the input feature vector dimension
 N = number of nodes
 M = number of training examples
@@ -188,30 +177,21 @@ class dataManager:
         self.A_test, self.P_avg_test, _, self.conv_avg_test = self.create_adjacency_matrix(self.X_test, self.threshold)
 
         print("--------data successfully filtered (dvariance)--------")
-    
-    def entropy_filter(self):
-        pass
-    
-    def resize_clip(self, clip_size): # clip size must be divisible by the original clip size
-        extend_factor = self.X_train.shape[2]//clip_size
-        self.X_train = self.X_train.reshape(self.X_train.shape[0]* self.X_train.shape[2], self.X_train.shape[1])
-        self.X_train = self.X_train.reshape(self.X_train.shape[0]//clip_size,self.X_train.shape[1],clip_size)
-        self.X_test = self.X_test.reshape(self.X_test.shape[0]* self.X_test.shape[2], self.X_test.shape[1])
-        self.X_test = self.X_test.reshape(self.X_test.shape[0]//clip_size,self.X_test.shape[1],clip_size)
-        self.Y_train = np.matmul(extend_identity(self.Y_train.shape[0], extend_factor),self.Y_train)
-        self.Y_test = np.matmul(extend_identity(self.Y_test.shape[0], extend_factor),self.Y_test)
-        # create adjacency matrix again using resized X_train and X_test
-        #self.A_train, self.P_avg_train, _ = self.create_adjacency_matrix(self.X_train, self.threshold)
-        #self.A_test, self.P_avg_test, _ = self.create_adjacency_matrix(self.X_test, self.threshold)
 
     def mean_pooling_1d(self, size = 5, stride = 4, padding = 0):
+        '''
+        Applies 1 d convolution on the signal to reduce the dimension of the signal
+        '''
         self.X_train = F.avg_pool1d(torch.from_numpy(self.X_train), size, stride, padding).detach().numpy()
         self.X_test = F.avg_pool1d(torch.from_numpy(self.X_test), size, stride, padding).detach().numpy()
         #self.Y_test = F.avg_pool1d(torch.from_numpy(self.Y_test), size, stride, padding).detach().numpy() > 0.5
         #self.Y_train = F.avg_pool1d(torch.from_numpy(self.Y_train), size, stride, padding).detach().numpy() > 0.5
         self.A_train, self.P_avg_train, _, self.conv_avg_train = self.create_adjacency_matrix(self.X_train, self.threshold)
         self.A_test, self.P_avg_test, _, self.conv_avg_test = self.create_adjacency_matrix(self.X_test, self.threshold)
-        
+
+'''
+Helper functions 
+'''
 def extend_identity(n, extend_factor):
     '''
     something like 
@@ -249,50 +229,3 @@ def get_label_variance(X,Y,label = 1):
     #print(np.mean(X, axis = 0, keepdims = True).shape)
     X = (X - np.mean(X, axis = 0, keepdims = True))**2
     return np.mean(X, axis = 0)
-
-
-
-#-------------Archived-------------#
-'''
-    def sanity_check(self, t_h, t_l, parent_dir):
-        
-        #optional function for debugging. prints all pairs with covariance greater than t_h and less than t_l
-        
-        # create an averaged signal accross all X_train samples
-        X_train_avg = np.mean(self.X_train, axis=0)
-        X_bar_train_avg = np.mean(np.mean(self.X_train, axis=2, keepdims=True), axis=0)
-        X_train_avg = np.transpose(X_train_avg) - np.transpose(X_bar_train_avg)
-        # select highest covariance couples
-        h_couples = []
-        for i in range(self.P_avg_train.shape[0]):
-            for j in range(self.P_avg_train.shape[0]):
-                if i < j:
-                    if self.P_avg_train[i, j] > t_h:
-                        h_couples.append((i, j))
-        # graph the highest covariance couples
-        for couple in h_couples:
-            plt.figure()
-            plt.title('high covariance node ' + str(couple[0]) + " and node " + str(couple[1]))
-            ax1 = plt.axes()
-            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[0]])
-            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[1]])
-            plt.savefig(parent_dir + '/Covariance and Adjacency Matrix/figures/' + 'high covariance node ' + str(
-                couple[0]) + " and node " + str(couple[1]) + '.png')
-
-        # select lowest covariance couples
-        l_couples = []
-        for i in range(self.P_avg_train.shape[0]):
-            for j in range(self.P_avg_train.shape[0]):
-                if i < j:
-                    if self.P_avg_train[i, j] < t_l:
-                        l_couples.append((i, j))
-        # graph the lowest covariance couples
-        for couple in l_couples:
-            plt.figure()
-            plt.title('low covariance node ' + str(couple[0]) + " and node " + str(couple[1]))
-            ax1 = plt.axes()
-            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[0]])
-            ax1.plot(np.linspace(0, 10, 640), X_train_avg[:, couple[1]])
-            plt.savefig(parent_dir + '/Covariance and Adjacency Matrix/figures/' + 'low covariance node ' + str(
-                couple[0]) + " and node " + str(couple[1]) + '.png')
-'''

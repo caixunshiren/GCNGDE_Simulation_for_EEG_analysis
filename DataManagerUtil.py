@@ -4,14 +4,24 @@ import matplotlib.pyplot as plt
 from scipy.linalg import fractional_matrix_power
 from DataManager import *
 
+'''
+DataManagerUtils are utilities functions for data visualization and helper functions.
+'''
 
-#shows heatmap a 2D matrix
+
+
 def show_heat_map(m, cmap = 'bwr'):
+    '''
+    shows heatmap a 2D matrix
+    '''
     plt.imshow(m, cmap=cmap)
     plt.colorbar()
     plt.show()
 
 def create_DAD(adj):
+    '''
+    Creates the symmetric normalization of the adjacency matrix as outlined in the GCN paper
+    '''
     np.fill_diagonal(adj, 1)
     rowsum = np.sum(adj, axis=1)
     d = np.diag_indices(adj.shape[0])
@@ -22,40 +32,15 @@ def create_DAD(adj):
     #print(D)
     return D@adj@D
 
-def shuffle_train_test(variables, train_ratio = 0.7, indices = None, print_summary = True):
-    data_all = np.concatenate((variables["X_train"], variables["X_test"]), axis = 2)
-    labels_all = np.concatenate((variables["y_train"], variables["y_test"]), axis = 1)
-    if indices is None:
-        indices = np.random.permutation(data_all.shape[2])
-    split_ind = int(train_ratio * data_all.shape[2])
-    training_idx, test_idx = indices[:split_ind], indices[split_ind:]
-    #print(split_ind, training_idx.shape)
-    variables["X_train"], variables["X_test"] = data_all[:,:,training_idx], data_all[:,:,test_idx]
-    variables["y_train"], variables["y_test"] = labels_all[:,training_idx], labels_all[:,test_idx]
-    if print_summary:
-        print("X_train:", variables["X_train"].shape)
-        print("X_test:", variables["X_test"].shape)
-        print("y_train:", variables["y_train"].shape, "Positive labes:", np.sum(variables["y_train"]))
-        print("y_test:", variables["y_test"].shape, "Positive labes:",np.sum(variables["y_test"]))
-    return variables, indices
-
-def remove_overlap(variables):
-    variables["X_train"], variables["X_test"] = variables["X_train"][192:449,:,:], variables["X_test"][192:449,:,:]
-    return variables
-
 def load_patient_data(filepath, verbose = True):
+    '''
+    Patient data loader to load .mat files for patient data
+    Verbose: plt show example signals
+    '''
     variables = {}
     f = h5py.File(filepath, 'r')
     for k, v in f.items():
         variables[k] = np.array(v)
-        '''
-        if k == 'X_train' or k == 'X_test':
-            if len(variables[k].shape) == 4:
-                shape = variables[k].shape
-                variables[k] = np.reshape(variables[k], (shape[0]*shape[1], shape[2], shape[3]))
-        '''
-        
-        
     if verbose: 
         for key in variables.keys():
             print("name:", key)
@@ -63,37 +48,32 @@ def load_patient_data(filepath, verbose = True):
             print("-----------------------")
         
         print('print sample EGG signal from one node:')
-        '''
-        plt.figure()
-        ax = plt.axes()
-        X_train = variables["X_train"]
-        X_test = variables["X_test"]
-        ax.plot(np.linspace(0, 10, X_train.shape[0]), X_train[:,5,0])
-        '''
         plot_signal(variables["X_train"], 5,0)
-        #plot_signal(variables["X_train"], 5,1)
-        #plot_signal(variables["X_train"], 5,2)
     return variables
 
 def plot_signal(data, node, sample):
+    '''
+    Helper function that plots a signal
+    '''
     plt.figure()
     ax = plt.axes()
     ax.plot(np.linspace(0, 10, data.shape[0]), data[:,node,sample])
 
-def visualize_avg_sim_matrix(dm, sim_train, sim_test):
-    ictal_sum = np.zeros(sim_train[0][:,:].shape)
-    normal_sum = np.zeros(sim_train[0][:,:].shape)
-    tc = 0
+def visualize_avg_sim_matrix(dm, sim):
+    '''
+    plt show the average of a matrix of similarity matrix, differed by ictal and non-ictal state
+    '''
+    ictal_sum = np.zeros(sim[0][:,:].shape)
+    normal_sum = np.zeros(sim[0][:,:].shape)
     ni = 0
     nn = 0
-    for i in range(sim_train.shape[0]):
-            if dm.Y_train[tc,0] == 1:
-                ictal_sum = ictal_sum + sim_train[i,:,:]
+    for i in range(sim.shape[0]):
+            if dm.Y_train[i,0] == 1:
+                ictal_sum = ictal_sum + sim[i,:,:]
                 ni+=1
             else:
-                normal_sum = normal_sum + sim_train[i,:,:]
+                normal_sum = normal_sum + sim[i,:,:]
                 nn+=1
-            tc+=1
     ictal_sum = ictal_sum / ni
     normal_sum = normal_sum / nn
     print("Average ictal")
@@ -101,15 +81,17 @@ def visualize_avg_sim_matrix(dm, sim_train, sim_test):
     print("Average Non-Ictal")
     show_heat_map(normal_sum)
 
-def visualize_sample_sim_matrix(dm, sim_train, sim_test):
-    perm = np.random.permutation(sim_train.shape[0])
-    train = sim_train#sim_train[perm, :, :]
-    label = dm.Y_train#dm.Y_train[perm,:]
+def visualize_sample_sim_matrix(dm, sim):
+    '''
+    plt show the sample similarity matrices based on ictal and non-ictal states
+    '''
+    train = sim
+    label = dm.Y_train
 
     sample_non_ictal = None
     sample_ictal = None
 
-    for i in range(sim_train.shape[0]):
+    for i in range(sim.shape[0]):
             if label[i,0] == 1 and sample_ictal is None:
                 sample_ictal = train[i,:,:]
 

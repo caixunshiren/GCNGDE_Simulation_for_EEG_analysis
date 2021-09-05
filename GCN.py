@@ -7,6 +7,10 @@ from crossbar import crossbar, ticket
 
 
 class GCN(nn.Module):
+    '''
+    Graph Convolutional Neural Network model (single layer)
+    Credit: Benjamin Cheng EngSci 2T2
+    '''
     def __init__(self, in_features, out_features, bias=False):
         super(GCN, self).__init__()
         self.in_features = in_features
@@ -42,6 +46,9 @@ class GCN(nn.Module):
 
 
 class SimularityMatrix(nn.Module):
+    """
+    Similarity matrix layer for NCDE application for GCN
+    """
     def __init__(self, in_features):
         super(SimularityMatrix, self).__init__()
         self.in_features = in_features
@@ -65,79 +72,25 @@ class SimularityMatrix(nn.Module):
     def forward(self, H, H0):
         # get hidden state (concate H0 and H)
         Z = torch.cat((H0, H), 2)
-        M = Z.shape[0]
-        N = Z.shape[1]
-        D = Z.shape[2]
         # centering normalize Z
         Z = self.fcn(Z)
         return self.get_sim_vectorized(Z)
-
-    def forward_approximate(self, H, H0, tensor):
-        # get hidden state (concate H0 and H)
-        Z = torch.cat((H0, H), 2)
-        # centering normalize Z
-        Z = self.fcn(Z)
-
-        theta = torch.diag(self.weight)
-        sim_matrix = torch.matmul(torch.matmul(Z, theta), tensor)
-        return sim_matrix
 
     # simularity between node u and node v (shape Mx1xD)
     # return the u,v index of the simularity matrix
     def get_sim(self, u, v):
         theta = torch.diag(self.weight)
-        # print(self.weight)
-        # print(u.shape, theta.shape, self.weight.shape, torch.transpose(v, 1, 2).shape)
         return torch.squeeze(torch.matmul(torch.matmul(u, theta), torch.transpose(v, 1, 2)))
 
-    def get_sim_vectorized(self, Z):  # Z is M x N Sx 2D
-        theta = torch.diag(self.weight)
-        sim_matrix = torch.matmul(torch.matmul(Z, theta), torch.transpose(Z, 1, 2))
-        return sim_matrix
-
     # centering-normalizing (CN) operator
     def fcn(self, Z):
         norm_Z = (Z - torch.mean(Z, dim=2, keepdim=True))
         return norm_Z / torch.std(Z, unbiased=True, dim=2, keepdim=True)
-        # (((1/(self.in_features-1)) * torch.sum(norm_Z**2, dim = 2, keepdim = True))**(1/2))
 
-class SimilarityMatrixApproximate(nn.Module):
-    def __init__(self, N, D):
-        super(SimilarityMatrixApproximate, self).__init__()
-        self.N = N
-        self.D = D
-
-        self.weight = nn.Parameter(torch.Tensor(D, N))
-
-        self.reset_parameters()
-
-    def __repr__(self):
-        return self.__class__.__name__ + ' (' \
-               + str(self.in_features) + ')'
-
-    def reset_parameters(self):
-        stdv = 1. / self.weight.size(0) ** 1 / 2
-        self.weight.data.uniform_(-stdv, stdv)
-
-    # computes the simularity matrix:
-    # H, feature matrix --> N x D
-    # A, precomputed adj matrix --> NxN
-    def forward(self, H, H0):
-        # get hidden state (concate H0 and H)
-        Z = torch.cat((H0, H), 2)
-        # centering normalize Z
-        Z = self.fcn(Z)
-        return torch.matmul(Z, self.weight)
-
-    # centering-normalizing (CN) operator
-    def fcn(self, Z):
-        norm_Z = (Z - torch.mean(Z, dim=2, keepdim=True))
-        return norm_Z / torch.std(Z, unbiased=True, dim=2, keepdim=True)
-        # (((1/(self.in_features-1)) * torch.sum(norm_Z**2, dim = 2, keepdim = True))**(1/2))
-
-
-# n-layer GCN Network
 class Net(nn.Module):
+    '''
+    N-layer GCN with Similarity Matrix output layer
+    '''
     def __init__(self, body_features, n_layers, activation = F.relu, bias=False):
         super(Net, self).__init__()
         assert(n_layers >= 1)
@@ -157,6 +110,9 @@ class Net(nn.Module):
         return sim_matrix
 
     def embedding_forward(self, h_0, A):
+        '''
+        helper function for extracting embeddings for intermediate layer
+        '''
         embeddings = []
         embeddings.append(h_0)
         x = self.activation(self.head(h_0, A))
@@ -167,14 +123,10 @@ class Net(nn.Module):
         sim_matrix = self.tail(x, h_0)
         return sim_matrix, embeddings
 
-    def forward_approximate(self, h_0, A, tensor):
-        # print(h_0.shape)
-        x = self.activation(self.head(h_0, A))
-        for layer in self.layers:
-            x = self.activation(layer(x, A))
-        return self.tail.forward_approximate(x, h_0, tensor)
-
     def get_embeddings(self, h_0, A):
+        '''
+        helper function for getting the last embeddings before the similarity matrix layer
+        '''
         x = self.activation(self.head(h_0, A))
         for layer in self.layers:
             x = self.activation(layer(x, A))
@@ -182,7 +134,9 @@ class Net(nn.Module):
 
 
 class sim_loss(torch.nn.Module):
-
+    '''
+    Customized loss function for NCDE
+    '''
     def __init__(self):
         super(sim_loss, self).__init__()
 
@@ -200,7 +154,9 @@ class sim_loss(torch.nn.Module):
 
 # --- CrossBar Implementation --- #
 class GCN_operation(torch.autograd.Function):
-    #Modified from Louis: Custom pytorch autograd function for crossbar VMM operation
+    '''
+    Customized autograd function for backprop with GCN on crossbar.
+    '''
     @staticmethod
     def forward(ctx, ticket_A, ticket_W_T, A, W, Z):
         #Z is batched M x N x D
@@ -227,6 +183,9 @@ class GCN_operation(torch.autograd.Function):
         return (None, None, None, dW, dZ)
 
 class GCN_wCB(nn.Module):
+    '''
+    crossbar implemented GCN single layer
+    '''
     def __init__(self, in_features, out_features, A, cb_A, cb_W):
         super(GCN_wCB, self).__init__()
         self.in_features = in_features
@@ -265,6 +224,9 @@ class GCN_wCB(nn.Module):
         self.ticket_W_T = self.cb_W_T.register_linear(self.weight)
 
 class Net_wCB(nn.Module):
+    '''
+    Crossbar implemented N-layer GCN with similarity matrix output. i love you
+    '''
     def __init__(self, body_features, n_layers, A, cb_A, cb_Ws, activation = F.relu):
         super(Net_wCB, self).__init__()
         assert(n_layers >= 1)

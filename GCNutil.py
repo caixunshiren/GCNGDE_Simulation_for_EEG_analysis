@@ -9,6 +9,11 @@ from torchsummary import summary
 from tqdm import tqdm
 from DataManagerUtil import create_DAD as create_DAD
 
+'''
+Utility functions for GCN
+'''
+
+
 def save_ckp(state, f_path):
     torch.save(state, f_path)
     print("model saved")
@@ -18,6 +23,9 @@ def load_ckp(checkpoint_path):
     return checkpoint
 
 def load_model(checkpoint, device_name ='cpu' ):
+    '''
+    Loads a GCN model from checkpoint, returns a GCN model and an optimizer
+    '''
     if device_name == 'cuda':
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         print("device set to cuda") if device == torch.device('cuda') else print("cuda is not available")
@@ -36,8 +44,11 @@ def load_model(checkpoint, device_name ='cpu' ):
     optimizer.load_state_dict(checkpoint['optimizer'])
     return model, optimizer
 
-# takes in numpy arrays
+
 def train_GCN(A, X_train, X_test, checkpoint, device_name='cpu', load=False, print_summary=True):
+    '''
+    Training code for GCN model, returns a trained model and a checkpoint
+    '''
     # preprocess inputs
     A = torch.from_numpy(A).float()
     X_train = torch.from_numpy(X_train).float()
@@ -113,8 +124,12 @@ def train_GCN(A, X_train, X_test, checkpoint, device_name='cpu', load=False, pri
 
     return model, checkpoint
 
-# get sim matrix from unsupervised model
+
 def get_sim_matrix_from_model(dm, model_dir):
+    '''
+    Get similarity matrices from a GCN model in the directory
+    Returns: training set similarity matrices, test set similarity matrices
+    '''
     checkpoint = load_ckp(model_dir)
 
     # preprocess inputs
@@ -136,18 +151,42 @@ def get_sim_matrix_from_model(dm, model_dir):
     optimizer.load_state_dict(checkpoint['optimizer'])
 
     model.eval()
-    sim_train = []
-    sim_test = []
-    permutation = range(input_train.shape[0])
-    batch_size = parameters['batch_size']
 
     sim1 = model(input_train, A).to(device)
     sim2 = model(input_test, A).to(device)
     return sim1.cpu().detach().numpy(), sim2.cpu().detach().numpy()
 
-# get pretrained sim matrix
 def load_flattened_sim_matrix(sim_train, sim_test, dm):
+    '''
+    reshape flattened similarity matrices into 2D
+    '''
+    sim_train = np.delete(sim_train, np.s_[dm.train_indices], axis=0)
+    sim_test = np.delete(sim_test, np.s_[dm.test_indices], axis=0)
 
+    d = int((2*sim_train.shape[1])**(1/2))
+    tri_indices = torch.triu_indices(d, d)
+
+    sim_train_list = []
+    for j in range(sim_train.shape[0]):
+        sim = np.zeros((1, d, d))
+        for i in range(sim_train.shape[1]):
+            sim[0, int(tri_indices[0, i]), int(tri_indices[1, i])] = sim_train[j, i]
+        sim_train_list.append(sim)
+
+    sim_test_list = []
+    for j in range(sim_test.shape[0]):
+        sim = np.zeros((1, d, d))
+        for i in range(sim_train.shape[1]):
+            sim[0, int(tri_indices[0, i]), int(tri_indices[1, i])] = sim_test[j, i]
+        sim_test_list.append(sim)
+
+    return np.vstack(sim_train_list), np.vstack(sim_test_list)
+
+'''
+def load_flattened_sim_matrix(sim_train, sim_test, dm):
+    '''
+    reshape flattened similarity matrices into 2D
+    '''
     sim_train = np.delete(sim_train, np.s_[dm.train_indices], axis=0)
     sim_test = np.delete(sim_test, np.s_[dm.test_indices], axis=0)
 
@@ -167,5 +206,5 @@ def load_flattened_sim_matrix(sim_train, sim_test, dm):
         sim_test_list.append(sim)
 
     return np.vstack(sim_train_list), np.vstack(sim_test_list)
-
+'''
 
