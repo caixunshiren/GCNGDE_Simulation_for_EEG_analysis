@@ -6,6 +6,10 @@ from GDE import *
 from GDEsolvers import *
 import numpy as np
 
+'''
+Utility functions for GDE
+'''
+
 def save_ckp(state, f_path):
     torch.save(state, f_path)
     print("model saved")
@@ -16,6 +20,9 @@ def load_ckp(checkpoint_path):
     return checkpoint
 
 def load_model(checkpoint, A, device_name ='cpu' ):
+    '''
+        model loader for GDE
+    '''
     if device_name == 'cuda':
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         print("device set to cuda") if device == torch.device('cuda') else print("cuda is not available")
@@ -35,8 +42,10 @@ def load_model(checkpoint, A, device_name ='cpu' ):
     optimizer.load_state_dict(checkpoint['optimizer'])
     return model, optimizer
 
-# takes in numpy arrays
 def train_GDE(A, X_train, X_test, checkpoint, device_name = 'cpu',load=False, print_summary=False):
+    '''
+        Training code for GCN model, returns a trained model and a checkpoint
+    '''
     # preprocess inputs
     A = torch.from_numpy(A).float()
     X_train = torch.from_numpy(X_train).float()

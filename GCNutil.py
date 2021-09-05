@@ -184,9 +184,9 @@ def load_flattened_sim_matrix(sim_train, sim_test, dm):
 
 '''
 def load_flattened_sim_matrix(sim_train, sim_test, dm):
-    '''
-    reshape flattened similarity matrices into 2D
-    '''
+    
+    #reshape flattened similarity matrices into 2D
+    
     sim_train = np.delete(sim_train, np.s_[dm.train_indices], axis=0)
     sim_test = np.delete(sim_test, np.s_[dm.test_indices], axis=0)
 
