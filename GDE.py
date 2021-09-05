@@ -164,14 +164,7 @@ class SimularityMatrix(nn.Module):
     # return the u,v index of the simularity matrix
     def get_sim(self, u, v):
         theta = torch.diag(self.weight)
-        # print(self.weight)
-        # print(u.shape, theta.shape, self.weight.shape, torch.transpose(v, 1, 2).shape)
         return torch.squeeze(torch.matmul(torch.matmul(u, theta), torch.transpose(v, 1, 2)))
-
-    def get_sim_vectorized(self, Z):  # Z is M x N Sx 2D
-        theta = torch.diag(self.weight)
-        sim_matrix = torch.matmul(torch.matmul(Z, theta), torch.transpose(Z, 1, 2))
-        return sim_matrix
 
     # centering-normalizing (CN) operator
     def fcn(self, Z):
@@ -189,9 +182,6 @@ class ODENet(nn.Module):
         # Controls amount of parameters
         self.body_channels = body_channels
         self.f = Block(A, body_channels, F.relu, hidden_layers)
-
-        # Head
-        # self.head = GCN(A, in_channels, body_channels)
 
         # Body
         self.int_f = solver
@@ -274,7 +264,7 @@ class GCN_operation(torch.autograd.Function):
         dW = torch.matmul(torch.matmul(torch.transpose(Z, 1, 2), A.T), dZ_out)
         return (None, None, None, dW, dZ)
 
-# GCN Block for body layers
+# GDE Block for body layers
 class Block_wCB(nn.Module):
     def __init__(self, A, features, activation, num_layers, net_params, cb_A, cb_Ws):
         super(Block_wCB, self).__init__()

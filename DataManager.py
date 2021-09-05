@@ -162,6 +162,9 @@ class dataManager:
         
     #filter referencce: https://www.sciencedirect.com/science/article/abs/pii/S1388245711003774?via%3Dihub
     def apply_variance_filter(self, n):# n is the number of nodes to be kept
+        '''
+        reduce number of nodes based on variance
+        '''
         ind = np.argsort(get_label_variance(self.X_train, self.Y_train))[::-1]
         #print(ind)
         ind = ind[:n]
@@ -176,6 +179,9 @@ class dataManager:
         print("--------data successfully filtered (variance)--------")
     
     def apply_dvariance_filter(self, n):
+        '''
+        reduce number of nodes based on difference of variance between positive and negative samples
+        '''
         ind = np.argsort(np.absolute(get_label_variance(self.X_train, self.Y_train)-get_label_variance(self.X_train, self.Y_train, 0)))[::-1]
         #print(ind)
         ind = ind[:n]
