@@ -5,7 +5,9 @@ from torchsummary import summary
 import copy
 from crossbar import crossbar, ticket
 from tqdm import tqdm
-
+'''
+RNN models for brain state identification
+'''
 class Simple_block(nn.Module):
     def __init__(self, in_dim, out_dim, hidden_dim, activation_h = nn.Tanh(), activation_o = nn.Sigmoid()):
         #h+1 = activation(Win*input + Wh*hidden + bh)

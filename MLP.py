@@ -5,8 +5,13 @@ from torchsummary import summary
 import copy
 from crossbar import crossbar, ticket
 from tqdm import tqdm
-
+'''
+MLP models for brain state identification
+'''
 class MLP(nn.Module):
+    '''
+    customizable MLP class
+    '''
     def __init__(self, matrix_dim, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5]):
         super(MLP, self).__init__()
         feature_len = torch.triu_indices(matrix_dim, matrix_dim).shape[1]
@@ -32,40 +37,6 @@ class MLP(nn.Module):
 
     def forward(self, sim_matrices):
         x = self.flatten(sim_matrices)
-        for layer in self.layers:
-            x = layer(x)
-        return x
-
-class MLP2(nn.Module):
-    def __init__(self, matrix_dim, n_layers=2, layer_size_factor=[1, 5], dropout=[-1, 0.5]):
-        super(MLP2, self).__init__()
-        feature_len = matrix_dim * matrix_dim
-        self.layers = nn.ModuleList()
-        self.matrix_dim = matrix_dim
-        self.n_layers=n_layers
-        self.layer_size_factor=layer_size_factor
-        self.dropout=dropout
-        for i in range(n_layers):
-            if dropout[i] > 0:
-                self.layers.append(nn.Dropout(dropout[i]))
-            if i < n_layers - 1:
-                self.layers.append(
-                    nn.Linear(int(feature_len // layer_size_factor[i]), int(feature_len // layer_size_factor[i + 1])))
-                self.layers.append(nn.ReLU())
-            else:
-                self.layers.append(nn.Linear(int(feature_len // layer_size_factor[i]), 1))
-                self.layers.append(nn.Sigmoid())
-
-    def flatten(self, sim_matrices):
-        tri_indices = torch.triu_indices(sim_matrices.shape[1], sim_matrices.shape[2])
-        return sim_matrices[:, tri_indices[0, :], tri_indices[1, :]]
-
-    def flatten2(self, sim_matrices):
-        M, N, _ = sim_matrices.shape
-        return torch.reshape(sim_matrices,(M, N*N))
-
-    def forward(self, sim_matrices):
-        x = self.flatten2(sim_matrices)
         for layer in self.layers:
             x = layer(x)
         return x

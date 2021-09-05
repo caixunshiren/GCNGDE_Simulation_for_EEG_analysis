@@ -7,8 +7,11 @@ from torch.autograd.functional import vjp
 import time
 from crossbar import crossbar, ticket
 from GDEsolvers import *
+'''
+Graph Neural ODE model with NCGL in Torch
+'''
 
-# GCN Block for body layers
+# GDE Block for body layers
 class Block(nn.Module):
     def __init__(self, A, features, activation, num_layers):
         super(Block, self).__init__()
@@ -238,7 +241,9 @@ class sim_loss(torch.nn.Module):
     
 #--------------------crossbar implementation-----------------------#
 class GCN_operation(torch.autograd.Function):
-    # Modified from Louis: Custom pytorch autograd function for crossbar VMM operation
+    '''
+    Customized autograd function for backprop with GCN on crossbar.
+    '''
     @staticmethod
     def forward(ctx, ticket_A, ticket_W_T, A, W, Z):
         # Z is batched M x N x D
@@ -266,6 +271,9 @@ class GCN_operation(torch.autograd.Function):
 
 # GDE Block for body layers
 class Block_wCB(nn.Module):
+    '''
+    single crossbar block of GDE
+    '''
     def __init__(self, A, features, activation, num_layers, net_params, cb_A, cb_Ws):
         super(Block_wCB, self).__init__()
         self.features = features
@@ -299,6 +307,9 @@ class Block_wCB(nn.Module):
         print("remap successfully")
     
 class ODENet_wCB(nn.Module):
+    '''
+    Crossbar ODE net
+    '''
     def __init__(self, solver, body_channels, hidden_layers, A, solver_params, cb_A, cb_Ws):
         super(ODENet_wCB, self).__init__()
 

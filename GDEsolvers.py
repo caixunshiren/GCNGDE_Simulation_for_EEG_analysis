@@ -6,6 +6,9 @@ import torch.nn.functional as F
 from torch.autograd.functional import vjp
 import time
 
+'''
+solver butcher tableau
+'''
 RK4 = ((  0,),
        (1/2, 1/2,),
        (1/2,   0,  1/2,),
@@ -21,6 +24,9 @@ RK38 = ((  0,),
        (  1,   1,    -1,   1,),
        (1/8, 3/8, 3/8, 1/8,))
 
+'''
+explicit RK family solver
+'''
 def explicit_RK(b_tableau, f, x0, t0, t1, N, embeddings = None):
     h = (t1 - t0) / float(N)  # calculate step size
     x = x0  # initialize saved dynamics
@@ -32,7 +38,9 @@ def explicit_RK(b_tableau, f, x0, t0, t1, N, embeddings = None):
             k.append(f(x + sum(w * k[idx] * h for idx, w in enumerate(row[1:])), time + row[0] * h))  # calculate k's.
         x = x + sum(w * k_i * h for k_i, w in zip(k, b_tableau[-1]))  # calculate timestep
     return x
-
+'''
+explicit RK family solver with intermediate output
+'''
 def verbose_solver(b_tableau, f, x0, t0, t1, N, embeddings):
     h = (t1 - t0) / float(N)  # calculate step size
     x = x0  # initialize saved dynamics
