@@ -161,13 +161,13 @@ class SimularityMatrix(nn.Module):
         D = Z.shape[2]
         # centering normalize Z
         Z = self.fcn(Z)
-        return self.get_sim_vectorized(Z)
+        return self.get_sim(Z)
 
     # simularity between node u and node v (shape Mx1xD)
     # return the u,v index of the simularity matrix
-    def get_sim(self, u, v):
+    def get_sim(self, Z):  # Z is M x N Sx 2D
         theta = torch.diag(self.weight)
-        return torch.squeeze(torch.matmul(torch.matmul(u, theta), torch.transpose(v, 1, 2)))
+        return torch.matmul(torch.matmul(Z, theta), torch.transpose(Z, 1, 2))
 
     # centering-normalizing (CN) operator
     def fcn(self, Z):

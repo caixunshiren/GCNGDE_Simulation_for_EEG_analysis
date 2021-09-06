@@ -9,9 +9,10 @@ from tqdm import tqdm
 RNN models for brain state identification
 '''
 class Simple_block(nn.Module):
+    '''
+    simple RNN block
+    '''
     def __init__(self, in_dim, out_dim, hidden_dim, activation_h = nn.Tanh(), activation_o = nn.Sigmoid()):
-        #h+1 = activation(Win*input + Wh*hidden + bh)
-        #out = activation(Wout*h+1 + bo)
         super(Simple_block, self).__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
@@ -25,9 +26,6 @@ class Simple_block(nn.Module):
         self.Wout = nn.Parameter(torch.Tensor(hidden_dim, out_dim))
         self.bo = nn.Parameter(torch.Tensor(1, out_dim))
         self.reset_parameters()
-
-
-
 
     def reset_parameters(self):
         stdv = 1. / self.Win.size(1) ** 1 / 2
@@ -46,21 +44,15 @@ class Simple_block(nn.Module):
         self.bo.data.uniform_(-stdv, stdv)
 
     def forward(self, X, h):
-        #input tensors are in the form m x n where m is the number training examples and n is the feature dimension
-        #compute hidden state
-        #print("debug:")
-        #print("X:", X.device)
-        #print("Win:", self.Win.device)
-        #print("h:", h.device)
-        #print("Wh:", self.Wh.device)
-        #print("bh:", self.bh.device)
         h_1 = self.activation_h(torch.matmul(X, self.Win) + torch.matmul(h, self.Wh) + self.bh)
         out = self.activation_o(torch.matmul(h_1, self.Wout) + self.bo)
-
         return out, h_1
 
 
 class RNN(nn.Module):
+    '''
+    full RNN model
+    '''
     def __init__(self, in_dim, out_dim, hidden_dim, activation_h = nn.Tanh(), activation_o = nn.Sigmoid(), device = torch.device('cpu')):
         super(RNN, self).__init__()
         self.hidden_dim = hidden_dim
@@ -89,45 +81,53 @@ class RNN(nn.Module):
 from sklearn.metrics import f1_score as F1_score
 from sklearn.metrics import precision_score, recall_score, roc_auc_score
 from sklearn import metrics
-
-
+'''
+Accuracy functions
+'''
 def accuracy(X, Y, threshold=0.5):
+    '''
+    plain accuracy (not good for imbalanced dataset like EU patients)
+    '''
     X = (X >= threshold)
     num = torch.sum(X == Y)
     return float(num / Y.shape[0])
 
-
 def F1(y_pred, y_true, threshold=0.5):
+    '''
+    F1 score
+    '''
     y_pred = y_pred > threshold
     f1 = F1_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
-
     return f1
 
-
 def precision(y_pred, y_true, threshold=0.5):
+    '''
+    precision
+    '''
     y_pred = y_pred > threshold
     return precision_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
 
-
 def recall(y_pred, y_true, threshold=0.5):
+    '''
+    recall
+    '''
     y_pred = y_pred > threshold
     return recall_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
 
-
-def auc(y_pred, y_true, threshold=0.5):
-    y_pred = y_pred > threshold
-    return roc_auc_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
-
-
-def auc2(y_pred, y_true, threshold=None):
+def auc(y_pred, y_true, threshold = None):
+    '''
+    AUC score
+    '''
     fpr, tpr, thresholds = metrics.roc_curve(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy(), pos_label=1)
     return metrics.auc(fpr, tpr)
-
 
 import matplotlib.pyplot as plt
 
 
 def plot_AUC(y_pred, y_true):
+    '''
+    plotting the ROC curve
+    '''
     fpr, tpr, threshold = metrics.roc_curve(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy(), pos_label=1)
     plt.style.use('ggplot')
     plt.figure(figsize=(10, 10))
@@ -136,14 +136,12 @@ def plot_AUC(y_pred, y_true):
     plt.xlabel('False positive rate')
     plt.ylabel('True positive rate')
     plt.title('ROC curve')
-    plt.legend();
-
-
-def auc_nf(y_pred, y_true, threshold=None):
-    return roc_auc_score(y_true.cpu().detach().numpy(), y_pred.cpu().detach().numpy())
-
+    plt.legend()
 
 def train_RNN(dm, sim_train, sim_test, parameters, acc_fn= F1, autostop_decay=0.995, print_summary=True, verbose=True):
+    '''
+    RNN training code
+    '''
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     RNNmodel = RNN(sim_train.shape[1], 1, parameters['hidden_dim'], device = device).to(device)
     X_train = torch.from_numpy(sim_train).float().to(device)
@@ -228,6 +226,9 @@ def train_RNN(dm, sim_train, sim_test, parameters, acc_fn= F1, autostop_decay=0.
 
 
 def eval_RNN(model, sim_test, dm, device_name='cpu', threshold=0.5, verbose=True):
+    '''
+    RNN evaluation script
+    '''
     if device_name == 'cuda':
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         print("device set to cuda") if device == torch.device('cuda') else print("cuda is not available")
@@ -247,7 +248,7 @@ def eval_RNN(model, sim_test, dm, device_name='cpu', threshold=0.5, verbose=True
     p_acc = precision(val_pred, Y_test, threshold=threshold)
     r_acc = recall(val_pred, Y_test, threshold=threshold)
     # auc_acc = auc(val_pred, Y_test, threshold=threshold)
-    auc_acc = auc2(val_pred, Y_test)
+    auc_acc = auc(val_pred, Y_test)
     # auc_acc = auc_nf(val_pred, Y_test)
     if verbose:
         print("threshold:", threshold, " validation loss:", round(float(val_loss), 4), "F1 accuracy",
@@ -257,6 +258,9 @@ def eval_RNN(model, sim_test, dm, device_name='cpu', threshold=0.5, verbose=True
 
 
 def eval_plot_RNN(model, sim_test, dm, device_name='cpu', verbose=True):
+    '''
+    plots ROC for RNN model
+    '''
     if device_name == 'cuda':
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         print("device set to cuda") if device == torch.device('cuda') else print("cuda is not available")
