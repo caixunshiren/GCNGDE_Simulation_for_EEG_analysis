@@ -70,21 +70,22 @@ class Figure_plotter():
         save_sequential_plot(dm, sim_all["GDE_test"], '{}/{}_{}_{}_seqential_plot'.format(self.DIR,self.patient_name,model_name,'GDE'), i)
 
     def sim_progression(self, IM, dm, Araw, model_name):
-        def sequential_plot(lis, DIR):  # , DIR
-            plt.clf()
+        def sequential_plot(lis, DIR, names=None):
+            plt.clf
             fig, ax = plt.subplots(nrows=1, ncols=len(lis), constrained_layout=True)
             # plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=0.1)
             # plt.tight_layout()
             i = 0
             for col in ax:
                 im = col.imshow(lis[i], cmap='bwr')
-                col.title.set_text("H {}".format(i))
+                if names is not None:
+                    col.title.set_text(names[i])
 
                 col.axis('off')
                 i += 1
 
-            cbar_ax = fig.add_axes([1.1, 0.15, 0.05, 0.7])
-            fig.colorbar(im, cax=cbar_ax)
+            # cbar_ax = fig.add_axes([1.1, 0.15, 0.05, 0.7])
+            fig.colorbar(im)  # , cax=cbar_ax)
 
             plt.savefig(DIR)
             plt.show()
@@ -116,7 +117,65 @@ class Figure_plotter():
                     break
             lis.append(sample_non_ictal)
 
-        sequential_plot(lis)
+        sequential_plot(lis, '{}/{}_{}_{}_sim_progression_plot'.format(self.DIR,self.patient_name,model_name,'GCN'),['H' + str(i) for i in range(len(lis))])
+        dif = []
         for i in range(len(GCN_embeddings) - 1):
-            print("h", i + 1, "-", "h", i)
-            show_heat_map(lis[i + 1] - lis[i])
+            dif.append(lis[i + 1] - lis[i])
+        sequential_plot(dif, '{}/{}_{}_{}_sim_progression_diff_plot'.format(self.DIR,self.patient_name,model_name,'GCN'),["h" + str(i + 1) + "-" + "h" + str(i) for i in range(len(lis))])
+
+        _, GDE_embeddings = IM.GDEmodel.embedding_forward(torch.from_numpy(X_test).float().to(device_name),
+                                                       torch.from_numpy(A).float().to(device_name))
+        for h in GDE_embeddings:
+            print(h.shape)
+
+        lis = []
+        for j, h in enumerate(GDE_embeddings):
+            sim_m = IM.GDEmodel.tail(h, torch.from_numpy(X_test).float().to(device_name)).cpu().detach().numpy()
+            # save_avg_sim_matrix(dm, sim_m, "Figure 4. b/junk"+Patient)
+            label = dm.Y_test
+
+            sample_non_ictal = None
+            sample_ictal = None
+
+            for i in range(sim_m.shape[0]):
+                if label[i, 0] == 1 and sample_ictal is None:
+                    sample_ictal = sim_m[i, :, :]
+
+                elif label[i, 0] == 0 and sample_non_ictal is None:
+                    sample_non_ictal = sim_m[i, :, :]
+
+                elif sample_ictal is not None and sample_non_ictal is not None:
+                    break
+            lis.append(sample_non_ictal)
+        sequential_plot(lis, '{}/{}_{}_{}_sim_progression_plot'.format(self.DIR,self.patient_name,model_name,'GDE'),['H' + str(i) for i in range(len(lis))])
+
+        dif = []
+        for i in range(len(GDE_embeddings) - 1):
+            dif.append(lis[i + 1] - lis[i])
+        sequential_plot(dif, '{}/{}_{}_{}_sim_progression_diff_plot'.format(self.DIR,self.patient_name,model_name,'GDE'),["h" + str(i + 1) + "-" + "h" + str(i) for i in range(len(lis))])
+
+    def training_curve_MLP(self, IMs, labels, cap=None):
+        for i,IM in enumerate(IMs):
+            records = IM.MLPcheckpointGCN['record']
+            if cap is None:
+                cap = len(records['val_loses'])
+            val_loss = records['val_loses'][:cap]
+            plt.plot(range(len(val_loss)), val_loss, label=labels[i])
+        plt.title("Model Validation Loss VS Training Epoch")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        plt.savefig('{}/{}_loss_plot'.format(self.DIR,self.patient_name))
+        plt.show()
+
+        for i,IM in enumerate(IMs):
+            records = IM.MLPcheckpointGCN['record']
+            if cap is None:
+                cap = len(records['val_auc'])
+            val_auc = records['val_auc'][:cap]
+            plt.plot(range(len(val_auc)), val_auc, label=labels[i])
+        plt.title("Model AUC score VS Training Epoch")
+        plt.xlabel("Epoch")
+        plt.ylabel("AUC")
+        plt.savefig('{}/{}_auc_plot'.format(self.DIR,self.patient_name))
+        plt.show()
+
