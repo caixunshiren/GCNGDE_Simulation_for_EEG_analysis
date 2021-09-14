@@ -143,6 +143,8 @@ class sim_loss(torch.nn.Module):
     def forward(self, sim_matrix, A, epsilon=1e-8):
         A_tf = (A != 0)
         M = sim_matrix.shape[0]
+        if M == 0:
+            return 0
         abs_N = torch.sum(A_tf, dim=1, keepdim=True)  # Nx1 matrix
 
         logexp_S = torch.log(torch.sum(torch.exp(sim_matrix), dim=2, keepdim=True))
